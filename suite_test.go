@@ -26,3 +26,17 @@ func (h *TestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.body, _ = ioutil.ReadAll(r.Body)
 	w.Write([]byte(h.content))
 }
+
+type ErrorHandler struct {
+	body    []byte
+	method  string
+	url     string
+	content string
+}
+
+func (h *ErrorHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.method = r.Method
+	h.url = r.URL.String()
+	h.body, _ = ioutil.ReadAll(r.Body)
+	http.Error(w, "Error performing requested operation", http.StatusBadRequest)
+}

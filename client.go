@@ -45,7 +45,7 @@ func (c *Client) NewRepository(name string, users []string, isPublic bool) (repo
 	}
 	if response.StatusCode != 200 {
 		b, _ := ioutil.ReadAll(response.Body)
-		msg := fmt.Errorf("Got error while performing request. Code: %s - Message: %s", response.StatusCode, b)
+		msg := fmt.Errorf("Got error while performing request. Code: %d - Message: %s", response.StatusCode, b)
 		return repository{}, msg
 	}
 	return r, nil
