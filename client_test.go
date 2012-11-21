@@ -18,7 +18,7 @@ func (s *S) TestDoRequest(c *C) {
 }
 
 func (s *S) TestNewRepository(c *C) {
-	h := TestHandler{content: `Repository "proj1" created successfuly`}
+	h := TestHandler{}
 	ts := httptest.NewServer(&h)
 	client := Client{Endpoint: ts.URL}
 	_, err := client.NewRepository("proj1", []string{"someuser"}, false)
@@ -27,7 +27,7 @@ func (s *S) TestNewRepository(c *C) {
 }
 
 func (s *S) TestNewRepositoryWithError(c *C) {
-	h := ErrorHandler{content: `Error creating repository`}
+	h := ErrorHandler{}
 	ts := httptest.NewServer(&h)
 	client := Client{Endpoint: ts.URL}
 	_, err := client.NewRepository("proj1", []string{"someuser"}, false)
