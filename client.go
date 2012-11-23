@@ -25,11 +25,13 @@ type user struct {
 }
 
 func (c *Client) doRequest(method, path string, body io.Reader) (*http.Response, error) {
-	request, err := http.NewRequest("POST", c.Endpoint+path, body)
+	request, err := http.NewRequest(method, c.Endpoint+path, body)
 	if err != nil {
 		return nil, err
 	}
-	request.Header.Set("Content-Type", "application/json")
+	if body != nil {
+		request.Header.Set("Content-Type", "application/json")
+	}
 	response, err := (&http.Client{}).Do(request)
 	if err != nil {
 		return response, err
@@ -55,6 +57,16 @@ func (c *Client) post(i interface{}, path string) error {
 	return nil
 }
 
+func (c *Client) delete(path string) error {
+	response, err := c.doRequest("DELETE", path, nil)
+	if response.StatusCode != 200 {
+		b, _ := ioutil.ReadAll(response.Body)
+		err := fmt.Errorf("Got error while performing request. Code: %d - Message: %s", response.StatusCode, b)
+		return err
+	}
+	return err
+}
+
 func (c *Client) NewRepository(name string, users []string, isPublic bool) (repository, error) {
 	r := repository{Name: name, Users: users, IsPublic: isPublic}
 	if err := c.post(r, "/repository"); err != nil {
@@ -69,4 +81,8 @@ func (c *Client) NewUser(name string, keys map[string]string) (user, error) {
 		return user{}, err
 	}
 	return u, nil
+}
+
+func (c *Client) RemoveUser(name string) error {
+	return c.delete("/user/" + name)
 }
