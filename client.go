@@ -86,3 +86,7 @@ func (c *Client) NewUser(name string, keys map[string]string) (user, error) {
 func (c *Client) RemoveUser(name string) error {
 	return c.delete("/user/" + name)
 }
+
+func (c *Client) RemoveRepository(name string) error {
+	return c.delete("/repository/" + name)
+}
