@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 )
 
+// should close the created servers
 func (s *S) TestDoRequest(c *C) {
 	h := TestHandler{content: `some return message`}
 	ts := httptest.NewServer(&h)
@@ -174,9 +175,9 @@ func (s *S) TestGrantAccess(c *C) {
 	err := client.GrantAccess("project1", "userx")
 	c.Assert(err, IsNil)
 	c.Assert(h.url, Equals, "/repository/project1/grant/userx")
-	c.Assert(h.method, Equals, "GET")
+	c.Assert(h.method, Equals, "POST")
 	c.Assert(string(h.body), Equals, "")
-	c.Assert(h.header.Get("Content-Type"), Not(Equals), "application/json")
+	c.Assert(h.header.Get("Content-Type"), Equals, "application/json")
 }
 
 func (s *S) TestGrantAccessWithError(c *C) {

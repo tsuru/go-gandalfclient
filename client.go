@@ -40,11 +40,14 @@ func (c *Client) doRequest(method, path string, body io.Reader) (*http.Response,
 }
 
 func (c *Client) post(i interface{}, path string) error {
-	j, err := json.Marshal(&i)
-	if err != nil {
-		return err
+	body := bytes.NewBufferString("")
+	if i != nil {
+		j, err := json.Marshal(&i)
+		if err != nil {
+			return err
+		}
+		body = bytes.NewBuffer(j)
 	}
-	body := bytes.NewBuffer(j)
 	response, err := c.doRequest("POST", path, body)
 	if err != nil {
 		return err
@@ -103,7 +106,7 @@ func (c *Client) RemoveRepository(name string) error {
 
 func (c *Client) GrantAccess(rName, uName string) error {
 	url := fmt.Sprintf("/repository/%s/grant/%s", rName, uName)
-	return c.get(url)
+	return c.post(nil, url)
 }
 
 func (c *Client) RevokeAccess(rName, uName string) error {
