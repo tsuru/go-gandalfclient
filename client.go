@@ -110,3 +110,8 @@ func (c *Client) RevokeAccess(rName, uName string) error {
 	url := fmt.Sprintf("/repository/%s/revoke/%s", rName, uName)
 	return c.delete(url)
 }
+
+func (c *Client) AddKey(uName string, key map[string]string) error {
+	url := fmt.Sprintf("/user/%s/key", uName)
+	return c.post(key, url)
+}

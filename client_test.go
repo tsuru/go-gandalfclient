@@ -208,3 +208,25 @@ func (s *S) TestRevokeAccessWithError(c *C) {
 	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
 	c.Assert(err, ErrorMatches, expected)
 }
+
+func (s *S) TestAddKey(c *C) {
+	h := TestHandler{}
+	ts := httptest.NewServer(&h)
+	client := Client{Endpoint: ts.URL}
+	key := map[string]string{"pubkey": "ssh-rsa somekey me@myhost"}
+	err := client.AddKey("username", key)
+	c.Assert(err, IsNil)
+	c.Assert(h.url, Equals, "/user/username/key")
+	c.Assert(h.method, Equals, "POST")
+	c.Assert(string(h.body), Equals, `{"pubkey":"ssh-rsa somekey me@myhost"}`)
+	c.Assert(h.header.Get("Content-Type"), Equals, "application/json")
+}
+
+func (s *S) TestAddKeyWithError(c *C) {
+	h := ErrorHandler{}
+	ts := httptest.NewServer(&h)
+	client := Client{Endpoint: ts.URL}
+	err := client.AddKey("proj2", map[string]string{"key": "ssh-rsa keycontent user@host"})
+	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
+	c.Assert(err, ErrorMatches, expected)
+}
