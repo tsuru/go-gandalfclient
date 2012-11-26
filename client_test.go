@@ -277,3 +277,28 @@ func (s *S) TestBulkGrantAccessWithError(c *C) {
 	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
 	c.Assert(err, ErrorMatches, expected)
 }
+
+func (s *S) TestBulkRevokeAccess(c *C) {
+	h := TestHandler{}
+	ts := httptest.NewServer(&h)
+	client := Client{Endpoint: ts.URL}
+	repositories := []string{"projectx", "projecty"}
+	err := client.BulkRevokeAccess("userx", repositories)
+	c.Assert(err, IsNil)
+	c.Assert(h.url, Equals, "/repository/revoke/userx")
+	c.Assert(h.method, Equals, "POST")
+	expected, err := json.Marshal(repositories)
+	c.Assert(err, IsNil)
+	c.Assert(h.body, DeepEquals, expected)
+	c.Assert(h.header.Get("Content-Type"), Equals, "application/json")
+}
+
+func (s *S) TestBulkRevokeAccessWithError(c *C) {
+	h := ErrorHandler{}
+	ts := httptest.NewServer(&h)
+	client := Client{Endpoint: ts.URL}
+	repositories := []string{"projectx", "projecty"}
+	err := client.BulkRevokeAccess("usery", repositories)
+	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
+	c.Assert(err, ErrorMatches, expected)
+}
