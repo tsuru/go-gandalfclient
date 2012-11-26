@@ -67,6 +67,24 @@ func (s *S) TestDeleteWithError(c *C) {
 	c.Assert(err, ErrorMatches, "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$")
 }
 
+func (s *S) TestGet(c *C) {
+	h := TestHandler{}
+	ts := httptest.NewServer(&h)
+	client := Client{Endpoint: ts.URL}
+	err := client.get("/user/someuser")
+	c.Assert(err, IsNil)
+	c.Assert(h.url, Equals, "/user/someuser")
+	c.Assert(h.method, Equals, "GET")
+}
+
+func (s *S) TestGetWithError(c *C) {
+	h := ErrorHandler{}
+	ts := httptest.NewServer(&h)
+	client := Client{Endpoint: ts.URL}
+	err := client.get("/user/someuser")
+	c.Assert(err, ErrorMatches, "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$")
+}
+
 func (s *S) TestNewRepository(c *C) {
 	h := TestHandler{}
 	ts := httptest.NewServer(&h)
@@ -145,6 +163,27 @@ func (s *S) TestRemoveRepositoryWithError(c *C) {
 	ts := httptest.NewServer(&h)
 	client := Client{Endpoint: ts.URL}
 	err := client.RemoveRepository("proj2")
+	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
+	c.Assert(err, ErrorMatches, expected)
+}
+
+func (s *S) TestGrantAccess(c *C) {
+	h := TestHandler{}
+	ts := httptest.NewServer(&h)
+	client := Client{Endpoint: ts.URL}
+	err := client.GrantAccess("project1", "userx")
+	c.Assert(err, IsNil)
+	c.Assert(h.url, Equals, "/repository/project1/grant/userx")
+	c.Assert(h.method, Equals, "GET")
+	c.Assert(string(h.body), Equals, "")
+	c.Assert(h.header.Get("Content-Type"), Not(Equals), "application/json")
+}
+
+func (s *S) TestGrantAccessWithError(c *C) {
+	h := ErrorHandler{}
+	ts := httptest.NewServer(&h)
+	client := Client{Endpoint: ts.URL}
+	err := client.GrantAccess("proj2", "usery")
 	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
 	c.Assert(err, ErrorMatches, expected)
 }

@@ -67,6 +67,16 @@ func (c *Client) delete(path string) error {
 	return err
 }
 
+func (c *Client) get(path string) error {
+	response, err := c.doRequest("GET", path, nil)
+	if response.StatusCode != 200 {
+		b, _ := ioutil.ReadAll(response.Body)
+		err := fmt.Errorf("Got error while performing request. Code: %d - Message: %s", response.StatusCode, b)
+		return err
+	}
+	return err
+}
+
 func (c *Client) NewRepository(name string, users []string, isPublic bool) (repository, error) {
 	r := repository{Name: name, Users: users, IsPublic: isPublic}
 	if err := c.post(r, "/repository"); err != nil {
@@ -89,4 +99,9 @@ func (c *Client) RemoveUser(name string) error {
 
 func (c *Client) RemoveRepository(name string) error {
 	return c.delete("/repository/" + name)
+}
+
+func (c *Client) GrantAccess(rName, uName string) error {
+	url := fmt.Sprintf("/repository/%s/grant/%s", rName, uName)
+	return c.get(url)
 }
