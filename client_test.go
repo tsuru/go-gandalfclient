@@ -230,3 +230,24 @@ func (s *S) TestAddKeyWithError(c *C) {
 	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
 	c.Assert(err, ErrorMatches, expected)
 }
+
+func (s *S) TestRemoveKey(c *C) {
+	h := TestHandler{}
+	ts := httptest.NewServer(&h)
+	client := Client{Endpoint: ts.URL}
+	err := client.RemoveKey("username", "keyname")
+	c.Assert(err, IsNil)
+	c.Assert(h.url, Equals, "/user/username/key/keyname")
+	c.Assert(h.method, Equals, "DELETE")
+	c.Assert(string(h.body), Equals, "")
+	c.Assert(h.header.Get("Content-Type"), Not(Equals), "application/json")
+}
+
+func (s *S) TestRemoveKeyWithError(c *C) {
+	h := ErrorHandler{}
+	ts := httptest.NewServer(&h)
+	client := Client{Endpoint: ts.URL}
+	err := client.RemoveKey("proj2", "keyname")
+	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
+	c.Assert(err, ErrorMatches, expected)
+}

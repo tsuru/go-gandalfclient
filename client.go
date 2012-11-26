@@ -115,3 +115,8 @@ func (c *Client) AddKey(uName string, key map[string]string) error {
 	url := fmt.Sprintf("/user/%s/key", uName)
 	return c.post(key, url)
 }
+
+func (c *Client) RemoveKey(uName, kName string) error {
+	url := fmt.Sprintf("/user/%s/key/%s", uName, kName)
+	return c.delete(url)
+}
