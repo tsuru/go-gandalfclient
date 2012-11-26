@@ -111,6 +111,11 @@ func (c *Client) RevokeAccess(rName, uName string) error {
 	return c.delete(url)
 }
 
+func (c *Client) BulkGrantAccess(uName string, rNames []string) error {
+	url := fmt.Sprintf("/repository/grant/%s", uName)
+	return c.post(rNames, url)
+}
+
 func (c *Client) AddKey(uName string, key map[string]string) error {
 	url := fmt.Sprintf("/user/%s/key", uName)
 	return c.post(key, url)
