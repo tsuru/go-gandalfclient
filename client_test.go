@@ -187,3 +187,24 @@ func (s *S) TestGrantAccessWithError(c *C) {
 	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
 	c.Assert(err, ErrorMatches, expected)
 }
+
+func (s *S) TestRevokeAccess(c *C) {
+	h := TestHandler{}
+	ts := httptest.NewServer(&h)
+	client := Client{Endpoint: ts.URL}
+	err := client.RevokeAccess("project1", "userx")
+	c.Assert(err, IsNil)
+	c.Assert(h.url, Equals, "/repository/project1/revoke/userx")
+	c.Assert(h.method, Equals, "DELETE")
+	c.Assert(string(h.body), Equals, "")
+	c.Assert(h.header.Get("Content-Type"), Not(Equals), "application/json")
+}
+
+func (s *S) TestRevokeAccessWithError(c *C) {
+	h := ErrorHandler{}
+	ts := httptest.NewServer(&h)
+	client := Client{Endpoint: ts.URL}
+	err := client.RevokeAccess("proj2", "usery")
+	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
+	c.Assert(err, ErrorMatches, expected)
+}

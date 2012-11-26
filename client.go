@@ -105,3 +105,8 @@ func (c *Client) GrantAccess(rName, uName string) error {
 	url := fmt.Sprintf("/repository/%s/grant/%s", rName, uName)
 	return c.get(url)
 }
+
+func (c *Client) RevokeAccess(rName, uName string) error {
+	url := fmt.Sprintf("/repository/%s/revoke/%s", rName, uName)
+	return c.delete(url)
+}
