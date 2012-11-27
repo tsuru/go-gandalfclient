@@ -13,12 +13,14 @@ type Client struct {
 	Endpoint string
 }
 
+// repository represents a git repository.
 type repository struct {
 	Name     string   `json:"name"`
 	Users    []string `json:"users"`
 	IsPublic bool     `json:"ispublic"`
 }
 
+// repository represents a git user.
 type user struct {
 	Name string            `json:"name"`
 	Keys map[string]string `json:"keys"`
@@ -80,6 +82,9 @@ func (c *Client) get(path string) error {
 	return err
 }
 
+// NewRepository creates a new repository with a given name and,
+// grants access to a list of users
+// and defines whether the repository is public.
 func (c *Client) NewRepository(name string, users []string, isPublic bool) (repository, error) {
 	r := repository{Name: name, Users: users, IsPublic: isPublic}
 	if err := c.post(r, "/repository"); err != nil {
@@ -88,6 +93,7 @@ func (c *Client) NewRepository(name string, users []string, isPublic bool) (repo
 	return r, nil
 }
 
+// NewUser creates a new user with her/his given keys.
 func (c *Client) NewUser(name string, keys map[string]string) (user, error) {
 	u := user{Name: name, Keys: keys}
 	if err := c.post(u, "/user"); err != nil {
@@ -96,39 +102,47 @@ func (c *Client) NewUser(name string, keys map[string]string) (user, error) {
 	return u, nil
 }
 
+// RemoveUser removes a user.
 func (c *Client) RemoveUser(name string) error {
 	return c.delete("/user/" + name)
 }
 
+// RemoveRepository removes a repository.
 func (c *Client) RemoveRepository(name string) error {
 	return c.delete("/repository/" + name)
 }
 
+// GrantAccess grants access to a repository.
 func (c *Client) GrantAccess(rName, uName string) error {
 	url := fmt.Sprintf("/repository/%s/grant/%s", rName, uName)
 	return c.post(nil, url)
 }
 
+// RevokeAccess revokes access from a repository.
 func (c *Client) RevokeAccess(rName, uName string) error {
 	url := fmt.Sprintf("/repository/%s/revoke/%s", rName, uName)
 	return c.delete(url)
 }
 
+// BulkGrantAccess grants user access to N repositories.
 func (c *Client) BulkGrantAccess(uName string, rNames []string) error {
 	url := fmt.Sprintf("/repository/grant/%s", uName)
 	return c.post(rNames, url)
 }
 
+// BulkRevokeAccess revokes the user access from N repositories.
 func (c *Client) BulkRevokeAccess(uName string, rNames []string) error {
 	url := fmt.Sprintf("/repository/revoke/%s", uName)
 	return c.post(rNames, url)
 }
 
+// AddKey adds keys to the user.
 func (c *Client) AddKey(uName string, key map[string]string) error {
 	url := fmt.Sprintf("/user/%s/key", uName)
 	return c.post(key, url)
 }
 
+// RemoveKey removes the key from the user.
 func (c *Client) RemoveKey(uName, kName string) error {
 	url := fmt.Sprintf("/user/%s/key/%s", uName, kName)
 	return c.delete(url)
