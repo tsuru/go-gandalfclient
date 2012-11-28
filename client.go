@@ -41,10 +41,10 @@ func (c *Client) doRequest(method, path string, body io.Reader) (*http.Response,
 	return response, nil
 }
 
-func (c *Client) post(i interface{}, path string) error {
-	body := bytes.NewBufferString("")
-	if i != nil {
-		j, err := json.Marshal(&i)
+func (c *Client) post(b interface{}, path string) error {
+	body := bytes.NewBufferString("null")
+	if b != nil {
+		j, err := json.Marshal(&b)
 		if err != nil {
 			return err
 		}
@@ -62,11 +62,19 @@ func (c *Client) post(i interface{}, path string) error {
 	return nil
 }
 
-func (c *Client) delete(path string) error {
-	response, err := c.doRequest("DELETE", path, nil)
+func (c *Client) delete(b interface{}, path string) error {
+	body := bytes.NewBufferString("null")
+	if b != nil {
+		j, err := json.Marshal(&b)
+		if err != nil {
+			return err
+		}
+		body = bytes.NewBuffer(j)
+	}
+	response, err := c.doRequest("DELETE", path, body)
 	if response.StatusCode != 200 {
-		b, _ := ioutil.ReadAll(response.Body)
-		err := fmt.Errorf("Got error while performing request. Code: %d - Message: %s", response.StatusCode, b)
+		respBody, _ := ioutil.ReadAll(response.Body)
+		err := fmt.Errorf("Got error while performing request. Code: %d - Message: %s", response.StatusCode, respBody)
 		return err
 	}
 	return err
@@ -104,36 +112,24 @@ func (c *Client) NewUser(name string, keys map[string]string) (user, error) {
 
 // RemoveUser removes a user.
 func (c *Client) RemoveUser(name string) error {
-	return c.delete("/user/" + name)
+	return c.delete(nil, "/user/"+name)
 }
 
 // RemoveRepository removes a repository.
 func (c *Client) RemoveRepository(name string) error {
-	return c.delete("/repository/" + name)
+	return c.delete(nil, "/repository/"+name)
 }
 
-// GrantAccess grants access to a repository.
-func (c *Client) GrantAccess(rName, uName string) error {
-	url := fmt.Sprintf("/repository/%s/grant/%s", rName, uName)
-	return c.post(nil, url)
+// GrantAccess grants access to N users into N repositories.
+func (c *Client) GrantAccess(rNames, uNames []string) error {
+	b := map[string][]string{"repositories": rNames, "users": uNames}
+	return c.post(b, "/repository/grant")
 }
 
-// RevokeAccess revokes access from a repository.
-func (c *Client) RevokeAccess(rName, uName string) error {
-	url := fmt.Sprintf("/repository/%s/revoke/%s", rName, uName)
-	return c.delete(url)
-}
-
-// BulkGrantAccess grants user access to N repositories.
-func (c *Client) BulkGrantAccess(uName string, rNames []string) error {
-	url := fmt.Sprintf("/repository/grant/%s", uName)
-	return c.post(rNames, url)
-}
-
-// BulkRevokeAccess revokes the user access from N repositories.
-func (c *Client) BulkRevokeAccess(uName string, rNames []string) error {
-	url := fmt.Sprintf("/repository/revoke/%s", uName)
-	return c.post(rNames, url)
+// RevokeAccess revokes access from N users from N repositories.
+func (c *Client) RevokeAccess(rNames, uNames []string) error {
+	b := map[string][]string{"repositories": rNames, "users": uNames}
+	return c.delete(b, "/repository/revoke")
 }
 
 // AddKey adds keys to the user.
@@ -145,5 +141,5 @@ func (c *Client) AddKey(uName string, key map[string]string) error {
 // RemoveKey removes the key from the user.
 func (c *Client) RemoveKey(uName, kName string) error {
 	url := fmt.Sprintf("/user/%s/key/%s", uName, kName)
-	return c.delete(url)
+	return c.delete(nil, url)
 }
