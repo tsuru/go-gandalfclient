@@ -41,14 +41,22 @@ func (c *Client) doRequest(method, path string, body io.Reader) (*http.Response,
 	return response, nil
 }
 
-func (c *Client) post(b interface{}, path string) error {
+func (c *Client) formatBody(b interface{}) (*bytes.Buffer, error) {
 	body := bytes.NewBufferString("null")
 	if b != nil {
 		j, err := json.Marshal(&b)
 		if err != nil {
-			return err
+			return body, err
 		}
 		body = bytes.NewBuffer(j)
+	}
+	return body, nil
+}
+
+func (c *Client) post(b interface{}, path string) error {
+	body, err := c.formatBody(b)
+	if err != nil {
+		return err
 	}
 	response, err := c.doRequest("POST", path, body)
 	if err != nil {
@@ -63,13 +71,9 @@ func (c *Client) post(b interface{}, path string) error {
 }
 
 func (c *Client) delete(b interface{}, path string) error {
-	body := bytes.NewBufferString("null")
-	if b != nil {
-		j, err := json.Marshal(&b)
-		if err != nil {
-			return err
-		}
-		body = bytes.NewBuffer(j)
+	body, err := c.formatBody(b)
+	if err != nil {
+		return err
 	}
 	response, err := c.doRequest("DELETE", path, body)
 	if response.StatusCode != 200 {

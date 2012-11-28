@@ -100,6 +100,18 @@ func (s *S) TestGetWithError(c *C) {
 	c.Assert(err, ErrorMatches, "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$")
 }
 
+func (s *S) TestFormatBody(c *C) {
+	b, err := (&Client{}).formatBody(map[string]string{"test": "foo"})
+	c.Assert(err, IsNil)
+	c.Assert(b.String(), Equals, `{"test":"foo"}`)
+}
+
+func (s *S) TestFormatBodyReturnJsonNullWithNilBody(c *C) {
+	b, err := (&Client{}).formatBody(nil)
+	c.Assert(err, IsNil)
+	c.Assert(b.String(), Equals, "null")
+}
+
 func (s *S) TestNewRepository(c *C) {
 	h := TestHandler{}
 	ts := httptest.NewServer(&h)
