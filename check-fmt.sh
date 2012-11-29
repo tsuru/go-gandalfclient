@@ -18,7 +18,7 @@ then
     status=1
 fi
 
-`go vet ./... > .vet 2>&1`
+`go vet ./ > .vet 2>&1`
 out=`cat .vet`
 if [ "${out}" != "" ]
 then
