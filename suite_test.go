@@ -1,4 +1,4 @@
-package gandalfclient
+package gandalf
 
 import (
 	"io/ioutil"
