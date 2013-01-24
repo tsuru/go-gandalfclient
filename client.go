@@ -76,6 +76,9 @@ func (c *Client) delete(b interface{}, path string) error {
 		return err
 	}
 	response, err := c.doRequest("DELETE", path, body)
+	if err != nil {
+		return err
+	}
 	if response.StatusCode != 200 {
 		respBody, _ := ioutil.ReadAll(response.Body)
 		err := fmt.Errorf("Got error while performing request. Code: %d - Message: %s", response.StatusCode, respBody)

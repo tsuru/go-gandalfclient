@@ -62,7 +62,13 @@ func (s *S) TestDelete(c *C) {
 	c.Assert(string(h.body), Equals, "null")
 }
 
-func (s *S) TestDeleteWithError(c *C) {
+func (s *S) TestDeleteWithConnectionError(c *C) {
+	client := Client{Endpoint: "http://127.0.0.1:747399"}
+	err := client.delete(nil, "/users/something")
+	c.Assert(err, NotNil)
+}
+
+func (s *S) TestDeleteWithResponseError(c *C) {
 	h := ErrorHandler{}
 	ts := httptest.NewServer(&h)
 	client := Client{Endpoint: ts.URL}
