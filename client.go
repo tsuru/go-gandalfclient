@@ -27,7 +27,7 @@ type user struct {
 }
 
 type httpError struct {
-	code int
+	code   int
 	reason string
 }
 
