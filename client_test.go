@@ -78,6 +78,7 @@ func (s *S) TestDeleteWithConnectionError(c *C) {
 	client := Client{Endpoint: "http://127.0.0.1:747399"}
 	err := client.delete(nil, "/users/something")
 	c.Assert(err, NotNil)
+	c.Assert(err.Error(), Equals, "Failed to connect to Gandalf server, it's probably down.")
 }
 
 func (s *S) TestDeleteWithResponseError(c *C) {
