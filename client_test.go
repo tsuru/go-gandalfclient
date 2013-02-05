@@ -7,10 +7,10 @@ import (
 	"net/http/httptest"
 )
 
-// should close the created servers
 func (s *S) TestDoRequest(c *C) {
 	h := TestHandler{content: `some return message`}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	body := bytes.NewBufferString(`{"foo":"bar"}`)
 	response, err := client.doRequest("POST", "/test", body)
@@ -23,6 +23,7 @@ func (s *S) TestDoRequest(c *C) {
 func (s *S) TestDoRequestShouldNotSetContentTypeToJsonWhenBodyIsNil(c *C) {
 	h := TestHandler{content: `some return message`}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	response, err := client.doRequest("DELETE", "/test", nil)
 	c.Assert(err, IsNil)
@@ -33,6 +34,7 @@ func (s *S) TestDoRequestShouldNotSetContentTypeToJsonWhenBodyIsNil(c *C) {
 func (s *S) TestPost(c *C) {
 	h := TestHandler{content: `some return message`}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	r := repository{Name: "test", Users: []string{"samwan"}}
 	err := client.post(r, "/repository")
@@ -45,6 +47,7 @@ func (s *S) TestPost(c *C) {
 func (s *S) TestPostWithError(c *C) {
 	h := ErrorHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	r := repository{Name: "test", Users: []string{"samwan"}}
 	err := client.post(r, "/repository")
@@ -54,6 +57,7 @@ func (s *S) TestPostWithError(c *C) {
 func (s *S) TestDelete(c *C) {
 	h := TestHandler{content: `some return message`}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	err := client.delete(nil, "/user/someuser")
 	c.Assert(err, IsNil)
@@ -71,6 +75,7 @@ func (s *S) TestDeleteWithConnectionError(c *C) {
 func (s *S) TestDeleteWithResponseError(c *C) {
 	h := ErrorHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	err := client.delete(nil, "/user/someuser")
 	c.Assert(err, ErrorMatches, "^Error performing requested operation\n$")
@@ -80,6 +85,7 @@ func (s *S) TestDeleteWithResponseError(c *C) {
 func (s *S) TestDeleteWithBody(c *C) {
 	h := TestHandler{content: `some return message`}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	err := client.delete(map[string]string{"test": "foo"}, "/user/someuser")
 	c.Assert(err, IsNil)
@@ -91,6 +97,7 @@ func (s *S) TestDeleteWithBody(c *C) {
 func (s *S) TestGet(c *C) {
 	h := TestHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	err := client.get("/user/someuser")
 	c.Assert(err, IsNil)
@@ -101,6 +108,7 @@ func (s *S) TestGet(c *C) {
 func (s *S) TestGetWithError(c *C) {
 	h := ErrorHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	err := client.get("/user/someuser")
 	c.Assert(err, ErrorMatches, "^Error performing requested operation\n$")
@@ -121,6 +129,7 @@ func (s *S) TestFormatBodyReturnJsonNullWithNilBody(c *C) {
 func (s *S) TestNewRepository(c *C) {
 	h := TestHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	_, err := client.NewRepository("proj1", []string{"someuser"}, false)
 	c.Assert(err, IsNil)
@@ -132,6 +141,7 @@ func (s *S) TestNewRepository(c *C) {
 func (s *S) TestNewRepositoryWithError(c *C) {
 	h := ErrorHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	_, err := client.NewRepository("proj1", []string{"someuser"}, false)
 	expected := "^Error performing requested operation\n$"
@@ -141,6 +151,7 @@ func (s *S) TestNewRepositoryWithError(c *C) {
 func (s *S) TestNewUser(c *C) {
 	h := TestHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	_, err := client.NewUser("someuser", map[string]string{"testkey": "ssh-rsa somekey"})
 	c.Assert(err, IsNil)
@@ -152,6 +163,7 @@ func (s *S) TestNewUser(c *C) {
 func (s *S) TestNewUserWithError(c *C) {
 	h := ErrorHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	_, err := client.NewUser("someuser", map[string]string{"testkey": "ssh-rsa somekey"})
 	expected := "^Error performing requested operation\n$"
@@ -161,6 +173,7 @@ func (s *S) TestNewUserWithError(c *C) {
 func (s *S) TestRemoveUser(c *C) {
 	h := TestHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	err := client.RemoveUser("someuser")
 	c.Assert(err, IsNil)
@@ -172,6 +185,7 @@ func (s *S) TestRemoveUser(c *C) {
 func (s *S) TestRemoveUserWithError(c *C) {
 	h := ErrorHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	err := client.RemoveUser("someuser")
 	expected := "^Error performing requested operation\n$"
@@ -181,6 +195,7 @@ func (s *S) TestRemoveUserWithError(c *C) {
 func (s *S) TestRemoveRepository(c *C) {
 	h := TestHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	err := client.RemoveRepository("project1")
 	c.Assert(err, IsNil)
@@ -192,6 +207,7 @@ func (s *S) TestRemoveRepository(c *C) {
 func (s *S) TestRemoveRepositoryWithError(c *C) {
 	h := ErrorHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	err := client.RemoveRepository("proj2")
 	expected := "^Error performing requested operation\n$"
@@ -201,6 +217,7 @@ func (s *S) TestRemoveRepositoryWithError(c *C) {
 func (s *S) TestAddKey(c *C) {
 	h := TestHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	key := map[string]string{"pubkey": "ssh-rsa somekey me@myhost"}
 	err := client.AddKey("username", key)
@@ -214,6 +231,7 @@ func (s *S) TestAddKey(c *C) {
 func (s *S) TestAddKeyWithError(c *C) {
 	h := ErrorHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	err := client.AddKey("proj2", map[string]string{"key": "ssh-rsa keycontent user@host"})
 	expected := "^Error performing requested operation\n$"
@@ -223,6 +241,7 @@ func (s *S) TestAddKeyWithError(c *C) {
 func (s *S) TestRemoveKey(c *C) {
 	h := TestHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	err := client.RemoveKey("username", "keyname")
 	c.Assert(err, IsNil)
@@ -234,6 +253,7 @@ func (s *S) TestRemoveKey(c *C) {
 func (s *S) TestRemoveKeyWithError(c *C) {
 	h := ErrorHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	err := client.RemoveKey("proj2", "keyname")
 	expected := "^Error performing requested operation\n$"
@@ -243,6 +263,7 @@ func (s *S) TestRemoveKeyWithError(c *C) {
 func (s *S) TestGrantAccess(c *C) {
 	h := TestHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	repositories := []string{"projectx", "projecty"}
 	users := []string{"userx"}
@@ -259,6 +280,7 @@ func (s *S) TestGrantAccess(c *C) {
 func (s *S) TestGrantAccessWithError(c *C) {
 	h := ErrorHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	err := client.GrantAccess([]string{"projectx", "projecty"}, []string{"userx"})
 	expected := "^Error performing requested operation\n$"
@@ -268,6 +290,7 @@ func (s *S) TestGrantAccessWithError(c *C) {
 func (s *S) TestRevokeAccess(c *C) {
 	h := TestHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	repositories := []string{"projectx", "projecty"}
 	users := []string{"userx"}
@@ -284,6 +307,7 @@ func (s *S) TestRevokeAccess(c *C) {
 func (s *S) TestRevokeAccessWithError(c *C) {
 	h := ErrorHandler{}
 	ts := httptest.NewServer(&h)
+	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	err := client.RevokeAccess([]string{"projectx", "projecty"}, []string{"usery"})
 	expected := "^Error performing requested operation\n$"
