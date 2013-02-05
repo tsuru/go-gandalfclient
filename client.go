@@ -26,6 +26,15 @@ type user struct {
 	Keys map[string]string `json:"keys"`
 }
 
+type httpError struct {
+	code int
+	reason string
+}
+
+func (e *httpError) Error() string {
+	return fmt.Sprintf("Got error while performing request. Code: %d - Message: %s", e.code, e.reason)
+}
+
 func (c *Client) doRequest(method, path string, body io.Reader) (*http.Response, error) {
 	request, err := http.NewRequest(method, c.Endpoint+path, body)
 	if err != nil {
@@ -64,8 +73,7 @@ func (c *Client) post(b interface{}, path string) error {
 	}
 	if response.StatusCode != 200 {
 		b, _ := ioutil.ReadAll(response.Body)
-		err := fmt.Errorf("Got error while performing request. Code: %d - Message: %s", response.StatusCode, b)
-		return err
+		return &httpError{code: response.StatusCode, reason: string(b)}
 	}
 	return nil
 }
@@ -80,9 +88,8 @@ func (c *Client) delete(b interface{}, path string) error {
 		return err
 	}
 	if response.StatusCode != 200 {
-		respBody, _ := ioutil.ReadAll(response.Body)
-		err := fmt.Errorf("Got error while performing request. Code: %d - Message: %s", response.StatusCode, respBody)
-		return err
+		b, _ := ioutil.ReadAll(response.Body)
+		return &httpError{code: response.StatusCode, reason: string(b)}
 	}
 	return err
 }
@@ -91,8 +98,7 @@ func (c *Client) get(path string) error {
 	response, err := c.doRequest("GET", path, nil)
 	if response.StatusCode != 200 {
 		b, _ := ioutil.ReadAll(response.Body)
-		err := fmt.Errorf("Got error while performing request. Code: %d - Message: %s", response.StatusCode, b)
-		return err
+		return &httpError{code: response.StatusCode, reason: string(b)}
 	}
 	return err
 }
