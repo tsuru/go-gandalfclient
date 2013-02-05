@@ -48,7 +48,7 @@ func (s *S) TestPostWithError(c *C) {
 	client := Client{Endpoint: ts.URL}
 	r := repository{Name: "test", Users: []string{"samwan"}}
 	err := client.post(r, "/repository")
-	c.Assert(err, ErrorMatches, "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$")
+	c.Assert(err, ErrorMatches, "^Error performing requested operation\n$")
 }
 
 func (s *S) TestDelete(c *C) {
@@ -73,7 +73,7 @@ func (s *S) TestDeleteWithResponseError(c *C) {
 	ts := httptest.NewServer(&h)
 	client := Client{Endpoint: ts.URL}
 	err := client.delete(nil, "/user/someuser")
-	c.Assert(err, ErrorMatches, "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$")
+	c.Assert(err, ErrorMatches, "^Error performing requested operation\n$")
 	c.Assert(string(h.body), Equals, "null")
 }
 
@@ -103,7 +103,7 @@ func (s *S) TestGetWithError(c *C) {
 	ts := httptest.NewServer(&h)
 	client := Client{Endpoint: ts.URL}
 	err := client.get("/user/someuser")
-	c.Assert(err, ErrorMatches, "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$")
+	c.Assert(err, ErrorMatches, "^Error performing requested operation\n$")
 }
 
 func (s *S) TestFormatBody(c *C) {
@@ -134,7 +134,7 @@ func (s *S) TestNewRepositoryWithError(c *C) {
 	ts := httptest.NewServer(&h)
 	client := Client{Endpoint: ts.URL}
 	_, err := client.NewRepository("proj1", []string{"someuser"}, false)
-	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
+	expected := "^Error performing requested operation\n$"
 	c.Assert(err, ErrorMatches, expected)
 }
 
@@ -154,7 +154,7 @@ func (s *S) TestNewUserWithError(c *C) {
 	ts := httptest.NewServer(&h)
 	client := Client{Endpoint: ts.URL}
 	_, err := client.NewUser("someuser", map[string]string{"testkey": "ssh-rsa somekey"})
-	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
+	expected := "^Error performing requested operation\n$"
 	c.Assert(err, ErrorMatches, expected)
 }
 
@@ -174,7 +174,7 @@ func (s *S) TestRemoveUserWithError(c *C) {
 	ts := httptest.NewServer(&h)
 	client := Client{Endpoint: ts.URL}
 	err := client.RemoveUser("someuser")
-	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
+	expected := "^Error performing requested operation\n$"
 	c.Assert(err, ErrorMatches, expected)
 }
 
@@ -194,7 +194,7 @@ func (s *S) TestRemoveRepositoryWithError(c *C) {
 	ts := httptest.NewServer(&h)
 	client := Client{Endpoint: ts.URL}
 	err := client.RemoveRepository("proj2")
-	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
+	expected := "^Error performing requested operation\n$"
 	c.Assert(err, ErrorMatches, expected)
 }
 
@@ -216,7 +216,7 @@ func (s *S) TestAddKeyWithError(c *C) {
 	ts := httptest.NewServer(&h)
 	client := Client{Endpoint: ts.URL}
 	err := client.AddKey("proj2", map[string]string{"key": "ssh-rsa keycontent user@host"})
-	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
+	expected := "^Error performing requested operation\n$"
 	c.Assert(err, ErrorMatches, expected)
 }
 
@@ -236,7 +236,7 @@ func (s *S) TestRemoveKeyWithError(c *C) {
 	ts := httptest.NewServer(&h)
 	client := Client{Endpoint: ts.URL}
 	err := client.RemoveKey("proj2", "keyname")
-	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
+	expected := "^Error performing requested operation\n$"
 	c.Assert(err, ErrorMatches, expected)
 }
 
@@ -261,7 +261,7 @@ func (s *S) TestGrantAccessWithError(c *C) {
 	ts := httptest.NewServer(&h)
 	client := Client{Endpoint: ts.URL}
 	err := client.GrantAccess([]string{"projectx", "projecty"}, []string{"userx"})
-	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
+	expected := "^Error performing requested operation\n$"
 	c.Assert(err, ErrorMatches, expected)
 }
 
@@ -286,6 +286,6 @@ func (s *S) TestRevokeAccessWithError(c *C) {
 	ts := httptest.NewServer(&h)
 	client := Client{Endpoint: ts.URL}
 	err := client.RevokeAccess([]string{"projectx", "projecty"}, []string{"usery"})
-	expected := "^Got error while performing request. Code: 400 - Message: Error performing requested operation\n$"
+	expected := "^Error performing requested operation\n$"
 	c.Assert(err, ErrorMatches, expected)
 }

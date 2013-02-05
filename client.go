@@ -32,7 +32,7 @@ type httpError struct {
 }
 
 func (e *httpError) Error() string {
-	return fmt.Sprintf("Got error while performing request. Code: %d - Message: %s", e.code, e.reason)
+	return e.reason
 }
 
 func (c *Client) doRequest(method, path string, body io.Reader) (*http.Response, error) {
