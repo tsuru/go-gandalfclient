@@ -104,6 +104,15 @@ func (s *S) TestDeleteWithConnectionError(c *C) {
 	c.Assert(err.Error(), Equals, "Failed to connect to Gandalf server, it's probably down.")
 }
 
+func (s *S) TestDeleteWithMarshalingError(c *C) {
+	client := Client{Endpoint: "http://127.0.0.1:747399"}
+	err := client.delete(unmarshable{}, "/users/something")
+	c.Assert(err, NotNil)
+	e, ok := err.(*json.MarshalerError)
+	c.Assert(ok, Equals, true)
+	c.Assert(e.Err.Error(), Equals, "Unmarshable.")
+}
+
 func (s *S) TestDeleteWithResponseError(c *C) {
 	h := ErrorHandler{}
 	ts := httptest.NewServer(&h)
