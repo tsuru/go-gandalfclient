@@ -56,7 +56,7 @@ func (c *Client) formatBody(b interface{}) (*bytes.Buffer, error) {
 	if b != nil {
 		j, err := json.Marshal(&b)
 		if err != nil {
-			return body, err
+			return nil, err
 		}
 		body = bytes.NewBuffer(j)
 	}

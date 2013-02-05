@@ -3,9 +3,16 @@ package gandalf
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	. "launchpad.net/gocheck"
 	"net/http/httptest"
 )
+
+type unmarshable struct{}
+
+func (u unmarshable) MarshalJSON() ([]byte, error) {
+	return nil, errors.New("Unmarshable.")
+}
 
 func (s *S) TestDoRequest(c *C) {
 	h := TestHandler{content: `some return message`}
@@ -140,6 +147,16 @@ func (s *S) TestFormatBodyReturnJsonNullWithNilBody(c *C) {
 	b, err := (&Client{}).formatBody(nil)
 	c.Assert(err, IsNil)
 	c.Assert(b.String(), Equals, "null")
+}
+
+func (s *S) TestFormatBodyMarshalingFailure(c *C) {
+	client := &Client{}
+	b, err := client.formatBody(unmarshable{})
+	c.Assert(b, IsNil)
+	c.Assert(err, NotNil)
+	e, ok := err.(*json.MarshalerError)
+	c.Assert(ok, Equals, true)
+	c.Assert(e.Err.Error(), Equals, "Unmarshable.")
 }
 
 func (s *S) TestNewRepository(c *C) {
