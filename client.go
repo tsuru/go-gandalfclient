@@ -39,7 +39,7 @@ func (e *httpError) Error() string {
 func (c *Client) doRequest(method, path string, body io.Reader) (*http.Response, error) {
 	request, err := http.NewRequest(method, c.Endpoint+path, body)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("Invalid Gandalf endpoint.")
 	}
 	if body != nil {
 		request.Header.Set("Content-Type", "application/json")
