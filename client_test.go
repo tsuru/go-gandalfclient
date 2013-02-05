@@ -62,6 +62,13 @@ func (s *S) TestPostWithError(c *C) {
 	c.Assert(err, ErrorMatches, "^Error performing requested operation\n$")
 }
 
+func (s *S) TestPostConnectionFailure(c *C) {
+	client := Client{Endpoint: "http://127.0.0.1:747399"}
+	err := client.post(nil, "/")
+	c.Assert(err, NotNil)
+	c.Assert(err.Error(), Equals, "Failed to connect to Gandalf server, it's probably down.")
+}
+
 func (s *S) TestDelete(c *C) {
 	h := TestHandler{content: `some return message`}
 	ts := httptest.NewServer(&h)
