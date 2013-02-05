@@ -3,6 +3,7 @@ package gandalf
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -45,7 +46,7 @@ func (c *Client) doRequest(method, path string, body io.Reader) (*http.Response,
 	}
 	response, err := (&http.Client{}).Do(request)
 	if err != nil {
-		return response, err
+		return nil, errors.New("Failed to connect to Gandalf server, it's probably down.")
 	}
 	return response, nil
 }

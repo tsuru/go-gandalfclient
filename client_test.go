@@ -31,6 +31,14 @@ func (s *S) TestDoRequestShouldNotSetContentTypeToJsonWhenBodyIsNil(c *C) {
 	c.Assert(h.header.Get("Content-Type"), Not(Equals), "application/json")
 }
 
+func (s *S) TestDoRequestConnectionError(c *C) {
+	client := Client{Endpoint: "http://127.0.0.1:747399"}
+	response, err := client.doRequest("GET", "/", nil)
+	c.Assert(response, IsNil)
+	c.Assert(err, NotNil)
+	c.Assert(err.Error(), Equals, "Failed to connect to Gandalf server, it's probably down.")
+}
+
 func (s *S) TestPost(c *C) {
 	h := TestHandler{content: `some return message`}
 	ts := httptest.NewServer(&h)
