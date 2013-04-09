@@ -50,14 +50,6 @@ func (s *S) TestDoRequestConnectionError(c *C) {
 	c.Assert(err.Error(), Equals, "Failed to connect to Gandalf server, it's probably down.")
 }
 
-func (s *S) TestDoRequestInvalidURL(c *C) {
-	client := Client{Endpoint: ""}
-	response, err := client.doRequest("GET", "", nil)
-	c.Assert(response, IsNil)
-	c.Assert(err, NotNil)
-	c.Assert(err.Error(), Equals, "Invalid Gandalf endpoint.")
-}
-
 func (s *S) TestPost(c *C) {
 	h := TestHandler{content: `some return message`}
 	ts := httptest.NewServer(&h)
