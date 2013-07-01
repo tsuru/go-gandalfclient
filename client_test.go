@@ -140,12 +140,13 @@ func (s *S) TestDeleteWithBody(c *C) {
 }
 
 func (s *S) TestGet(c *C) {
-	h := TestHandler{}
+	h := TestHandler{content: `{"fookey": "bar keycontent"}`}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.get("/user/someuser")
+	out, err := client.get("/user/someuser")
 	c.Assert(err, IsNil)
+	c.Assert(string(out), Equals, `{"fookey": "bar keycontent"}`)
 	c.Assert(h.url, Equals, "/user/someuser")
 	c.Assert(h.method, Equals, "GET")
 }
@@ -155,7 +156,7 @@ func (s *S) TestGetWithError(c *C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.get("/user/someuser")
+	_, err := client.get("/user/someuser")
 	c.Assert(err, ErrorMatches, "^Error performing requested operation\n$")
 }
 
@@ -313,6 +314,28 @@ func (s *S) TestRemoveKeyWithError(c *C) {
 	err := client.RemoveKey("proj2", "keyname")
 	expected := "^Error performing requested operation\n$"
 	c.Assert(err, ErrorMatches, expected)
+}
+
+func (s *S) TestListKeys(c *C) {
+	h := TestHandler{content: `{"fookey":"bar keycontent"}`}
+	ts := httptest.NewServer(&h)
+	defer ts.Close()
+	client := Client{Endpoint: ts.URL}
+	keys, err := client.ListKeys("userx")
+	c.Assert(err, IsNil)
+	expected := map[string]string{"fookey": "bar keycontent"}
+	c.Assert(expected, DeepEquals, keys)
+	c.Assert(h.url, Equals, "/user/userx/keys")
+	c.Assert(h.method, Equals, "GET")
+}
+
+func (s *S) TestListKeysWithError(c *C) {
+	h := ErrorHandler{}
+	ts := httptest.NewServer(&h)
+	defer ts.Close()
+	client := Client{Endpoint: ts.URL}
+	_, err := client.ListKeys("userx")
+	c.Assert(err.Error(), Equals, "Error performing requested operation\n")
 }
 
 func (s *S) TestGrantAccess(c *C) {

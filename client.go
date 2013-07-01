@@ -99,13 +99,16 @@ func (c *Client) delete(b interface{}, path string) error {
 	return err
 }
 
-func (c *Client) get(path string) error {
+func (c *Client) get(path string) ([]byte, error) {
 	response, err := c.doRequest("GET", path, nil)
-	if response.StatusCode != 200 {
-		b, _ := ioutil.ReadAll(response.Body)
-		return &httpError{code: response.StatusCode, reason: string(b)}
+	if err != nil {
+		return []byte{}, &httpError{code: 500, reason: err.Error()}
 	}
-	return err
+	b, err := ioutil.ReadAll(response.Body)
+	if response.StatusCode != 200 {
+		return []byte{}, &httpError{code: response.StatusCode, reason: string(b)}
+	}
+	return b, err
 }
 
 // NewRepository creates a new repository with a given name and,
@@ -160,4 +163,16 @@ func (c *Client) AddKey(uName string, key map[string]string) error {
 func (c *Client) RemoveKey(uName, kName string) error {
 	url := fmt.Sprintf("/user/%s/key/%s", uName, kName)
 	return c.delete(nil, url)
+}
+
+// ListKeys retrieves all keys a given user has
+func (c *Client) ListKeys(uName string) (map[string]string, error) {
+	url := fmt.Sprintf("/user/%s/keys", uName)
+	resp, err := c.get(url)
+	if err != nil {
+		return nil, err
+	}
+	keys := map[string]string{}
+	err = json.Unmarshal(resp, &keys)
+	return keys, err
 }
