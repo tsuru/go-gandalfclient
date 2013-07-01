@@ -19,7 +19,7 @@ func (u unmarshable) MarshalJSON() ([]byte, error) {
 }
 
 func (s *S) TestDoRequest(c *C) {
-	h := TestHandler{content: `some return message`}
+	h := testHandler{content: `some return message`}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -32,7 +32,7 @@ func (s *S) TestDoRequest(c *C) {
 }
 
 func (s *S) TestDoRequestShouldNotSetContentTypeToJsonWhenBodyIsNil(c *C) {
-	h := TestHandler{content: `some return message`}
+	h := testHandler{content: `some return message`}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -51,7 +51,7 @@ func (s *S) TestDoRequestConnectionError(c *C) {
 }
 
 func (s *S) TestPost(c *C) {
-	h := TestHandler{content: `some return message`}
+	h := testHandler{content: `some return message`}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -64,7 +64,7 @@ func (s *S) TestPost(c *C) {
 }
 
 func (s *S) TestPostWithError(c *C) {
-	h := ErrorHandler{}
+	h := errorHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -90,7 +90,7 @@ func (s *S) TestPostMarshalingFailure(c *C) {
 }
 
 func (s *S) TestDelete(c *C) {
-	h := TestHandler{content: `some return message`}
+	h := testHandler{content: `some return message`}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -118,7 +118,7 @@ func (s *S) TestDeleteWithMarshalingError(c *C) {
 }
 
 func (s *S) TestDeleteWithResponseError(c *C) {
-	h := ErrorHandler{}
+	h := errorHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -128,7 +128,7 @@ func (s *S) TestDeleteWithResponseError(c *C) {
 }
 
 func (s *S) TestDeleteWithBody(c *C) {
-	h := TestHandler{content: `some return message`}
+	h := testHandler{content: `some return message`}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -140,7 +140,7 @@ func (s *S) TestDeleteWithBody(c *C) {
 }
 
 func (s *S) TestGet(c *C) {
-	h := TestHandler{content: `{"fookey": "bar keycontent"}`}
+	h := testHandler{content: `{"fookey": "bar keycontent"}`}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -152,7 +152,7 @@ func (s *S) TestGet(c *C) {
 }
 
 func (s *S) TestGetWithError(c *C) {
-	h := ErrorHandler{}
+	h := errorHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -183,7 +183,7 @@ func (s *S) TestFormatBodyMarshalingFailure(c *C) {
 }
 
 func (s *S) TestNewRepository(c *C) {
-	h := TestHandler{}
+	h := testHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -195,7 +195,7 @@ func (s *S) TestNewRepository(c *C) {
 }
 
 func (s *S) TestNewRepositoryWithError(c *C) {
-	h := ErrorHandler{}
+	h := errorHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -205,7 +205,7 @@ func (s *S) TestNewRepositoryWithError(c *C) {
 }
 
 func (s *S) TestNewUser(c *C) {
-	h := TestHandler{}
+	h := testHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -217,7 +217,7 @@ func (s *S) TestNewUser(c *C) {
 }
 
 func (s *S) TestNewUserWithError(c *C) {
-	h := ErrorHandler{}
+	h := errorHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -227,7 +227,7 @@ func (s *S) TestNewUserWithError(c *C) {
 }
 
 func (s *S) TestRemoveUser(c *C) {
-	h := TestHandler{}
+	h := testHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -239,7 +239,7 @@ func (s *S) TestRemoveUser(c *C) {
 }
 
 func (s *S) TestRemoveUserWithError(c *C) {
-	h := ErrorHandler{}
+	h := errorHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -249,7 +249,7 @@ func (s *S) TestRemoveUserWithError(c *C) {
 }
 
 func (s *S) TestRemoveRepository(c *C) {
-	h := TestHandler{}
+	h := testHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -261,7 +261,7 @@ func (s *S) TestRemoveRepository(c *C) {
 }
 
 func (s *S) TestRemoveRepositoryWithError(c *C) {
-	h := ErrorHandler{}
+	h := errorHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -271,7 +271,7 @@ func (s *S) TestRemoveRepositoryWithError(c *C) {
 }
 
 func (s *S) TestAddKey(c *C) {
-	h := TestHandler{}
+	h := testHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -285,7 +285,7 @@ func (s *S) TestAddKey(c *C) {
 }
 
 func (s *S) TestAddKeyWithError(c *C) {
-	h := ErrorHandler{}
+	h := errorHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -295,7 +295,7 @@ func (s *S) TestAddKeyWithError(c *C) {
 }
 
 func (s *S) TestRemoveKey(c *C) {
-	h := TestHandler{}
+	h := testHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -307,7 +307,7 @@ func (s *S) TestRemoveKey(c *C) {
 }
 
 func (s *S) TestRemoveKeyWithError(c *C) {
-	h := ErrorHandler{}
+	h := errorHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -317,7 +317,7 @@ func (s *S) TestRemoveKeyWithError(c *C) {
 }
 
 func (s *S) TestListKeys(c *C) {
-	h := TestHandler{content: `{"fookey":"bar keycontent"}`}
+	h := testHandler{content: `{"fookey":"bar keycontent"}`}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -330,7 +330,7 @@ func (s *S) TestListKeys(c *C) {
 }
 
 func (s *S) TestListKeysWithError(c *C) {
-	h := ErrorHandler{}
+	h := errorHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -339,7 +339,7 @@ func (s *S) TestListKeysWithError(c *C) {
 }
 
 func (s *S) TestGrantAccess(c *C) {
-	h := TestHandler{}
+	h := testHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -356,7 +356,7 @@ func (s *S) TestGrantAccess(c *C) {
 }
 
 func (s *S) TestGrantAccessWithError(c *C) {
-	h := ErrorHandler{}
+	h := errorHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -366,7 +366,7 @@ func (s *S) TestGrantAccessWithError(c *C) {
 }
 
 func (s *S) TestRevokeAccess(c *C) {
-	h := TestHandler{}
+	h := testHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
@@ -383,7 +383,7 @@ func (s *S) TestRevokeAccess(c *C) {
 }
 
 func (s *S) TestRevokeAccessWithError(c *C) {
-	h := ErrorHandler{}
+	h := errorHandler{}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}

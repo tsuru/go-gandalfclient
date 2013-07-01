@@ -17,7 +17,7 @@ type S struct{}
 
 var _ = Suite(&S{})
 
-type TestHandler struct {
+type testHandler struct {
 	body    []byte
 	method  string
 	url     string
@@ -25,7 +25,7 @@ type TestHandler struct {
 	header  http.Header
 }
 
-func (h *TestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.method = r.Method
 	h.url = r.URL.String()
 	h.body, _ = ioutil.ReadAll(r.Body)
@@ -33,7 +33,7 @@ func (h *TestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(h.content))
 }
 
-type ErrorHandler struct {
+type errorHandler struct {
 	body    []byte
 	method  string
 	url     string
@@ -41,7 +41,7 @@ type ErrorHandler struct {
 	header  http.Header
 }
 
-func (h *ErrorHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *errorHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.method = r.Method
 	h.url = r.URL.String()
 	h.body, _ = ioutil.ReadAll(r.Body)
