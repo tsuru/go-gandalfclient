@@ -204,6 +204,45 @@ func (s *S) TestNewRepositoryWithError(c *C) {
 	c.Assert(err, ErrorMatches, expected)
 }
 
+func (s *S) TestGetRepository(c *C) {
+	content := `{"name":"repo-name","git_url":"git@test.com:repo-name.git","ssh_url":"git://test.com/repo-name.git"}`
+	h := testHandler{content: content}
+	ts := httptest.NewServer(&h)
+	defer ts.Close()
+	client := Client{Endpoint: ts.URL}
+	r, err := client.GetRepository("repo-name")
+	c.Assert(err, IsNil)
+	c.Assert(h.url, Equals, "/repository/repo-name?:name=repo-name")
+	c.Assert(h.method, Equals, "GET")
+	c.Assert(r.Name, Equals, "repo-name")
+	c.Assert(r.GitURL, Equals, "git@test.com:repo-name.git")
+	c.Assert(r.SshURL, Equals, "git://test.com/repo-name.git")
+}
+
+func (s *S) TestGetRepositoryOnUnmarshalError(c *C) {
+	h := testHandler{}
+	ts := httptest.NewServer(&h)
+	defer ts.Close()
+	client := Client{Endpoint: ts.URL}
+	r, err := client.GetRepository("repo-name")
+	c.Assert(err, NotNil)
+	c.Assert(err, ErrorMatches, "^Caught error decoding returned json: unexpected end of JSON input$")
+	c.Assert(r.Name, Equals, "")
+	c.Assert(r.GitURL, Equals, "")
+	c.Assert(r.SshURL, Equals, "")
+}
+
+func (s *S) TestGetRepositoryOnHTTPError(c *C) {
+	content := `null`
+	h := errorHandler{content: content}
+	ts := httptest.NewServer(&h)
+	defer ts.Close()
+	client := Client{Endpoint: ts.URL}
+	_, err := client.GetRepository("repo-name")
+	c.Assert(err, NotNil)
+	c.Assert(err, ErrorMatches, "^Caught error getting repository metadata: Error performing requested operation\n$")
+}
+
 func (s *S) TestNewUser(c *C) {
 	h := testHandler{}
 	ts := httptest.NewServer(&h)

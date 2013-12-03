@@ -23,6 +23,8 @@ type repository struct {
 	Name     string   `json:"name"`
 	Users    []string `json:"users"`
 	IsPublic bool     `json:"ispublic"`
+	SshURL   string   `json:"ssh_url,omitempty"`
+	GitURL   string   `json:"git_url,omitempty"`
 }
 
 // repository represents a git user.
@@ -118,6 +120,20 @@ func (c *Client) NewRepository(name string, users []string, isPublic bool) (repo
 	r := repository{Name: name, Users: users, IsPublic: isPublic}
 	if err := c.post(r, "/repository"); err != nil {
 		return repository{}, err
+	}
+	return r, nil
+}
+
+// GetRepository gets metadata from a repository in Gandalf server.
+func (c *Client) GetRepository(name string) (repository, error) {
+	url := fmt.Sprintf("/repository/%s?:name=%s", name, name)
+	b, err := c.get(url)
+	if err != nil {
+		return repository{}, fmt.Errorf("Caught error getting repository metadata: %s", err.Error())
+	}
+	var r repository
+	if err := json.Unmarshal(b, &r); err != nil {
+		return repository{}, fmt.Errorf("Caught error decoding returned json: %s", err.Error())
 	}
 	return r, nil
 }
