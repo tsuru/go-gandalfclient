@@ -1,4 +1,4 @@
-// Copyright 2013 go-gandalfclient authors. All rights reserved.
+// Copyright 2014 go-gandalfclient authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -429,4 +429,28 @@ func (s *S) TestRevokeAccessWithError(c *C) {
 	err := client.RevokeAccess([]string{"projectx", "projecty"}, []string{"usery"})
 	expected := "^Error performing requested operation\n$"
 	c.Assert(err, ErrorMatches, expected)
+}
+
+func (s *S) TestGetDiff(c *C) {
+	content := "diff_test"
+	h := testHandler{content: content}
+	ts := httptest.NewServer(&h)
+	defer ts.Close()
+	client := Client{Endpoint: ts.URL}
+	diffOutput, err := client.GetDiff("repo-name", "1b970b076bbb30d708e262b402d4e31910e1dc10", "545b1904af34458704e2aa06ff1aaffad5289f8f")
+	c.Assert(err, IsNil)
+	c.Assert(h.url, Equals, "/repository/repo-name/diff/commits?:name=repo-name&previous_commit=1b970b076bbb30d708e262b402d4e31910e1dc10&last_commit=545b1904af34458704e2aa06ff1aaffad5289f8f")
+	c.Assert(h.method, Equals, "GET")
+	c.Assert(diffOutput, Equals, content)
+}
+
+func (s *S) TestGetDiffOnHTTPError(c *C) {
+	content := `null`
+	h := errorHandler{content: content}
+	ts := httptest.NewServer(&h)
+	defer ts.Close()
+	client := Client{Endpoint: ts.URL}
+	_, err := client.GetDiff("repo-name", "1b970b076bbb30d708e262b402d4e31910e1dc10", "545b1904af34458704e2aa06ff1aaffad5289f8f")
+	c.Assert(err, NotNil)
+	c.Assert(err, ErrorMatches, "^Caught error getting repository metadata: Error performing requested operation\n$")
 }

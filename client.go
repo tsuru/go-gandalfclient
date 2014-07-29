@@ -1,4 +1,4 @@
-// Copyright 2013 go-gandalfclient authors. All rights reserved.
+// Copyright 2014 go-gandalfclient authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -191,4 +191,14 @@ func (c *Client) ListKeys(uName string) (map[string]string, error) {
 	keys := map[string]string{}
 	err = json.Unmarshal(resp, &keys)
 	return keys, err
+}
+
+//GetDiff gets diff output between commits from a repository in Gandalf server.
+func (c *Client) GetDiff(repo, previousCommit, lastCommit string) (string, error) {
+	url := fmt.Sprintf("/repository/%s/diff/commits?:name=%s&previous_commit=%s&last_commit=%s", repo, repo, previousCommit, lastCommit)
+	diffOutput, err := c.get(url)
+	if err != nil {
+		return "", fmt.Errorf("Caught error getting repository metadata: %s", err.Error())
+	}
+	return string(diffOutput), nil
 }
