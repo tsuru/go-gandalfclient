@@ -207,7 +207,7 @@ func (c *Client) GetDiff(repo, previousCommit, lastCommit string) (string, error
 func (c *Client) GetHealthCheck() ([]byte, error) {
 	result, err := c.get("/healthcheck")
 	if err != nil {
-		return []byte{}, fmt.Errorf("Caught error getting repository metadata: %s", err.Error())
+		return []byte{}, &httpError{code: 500, reason: err.Error()}
 	}
 	return result, nil
 }
