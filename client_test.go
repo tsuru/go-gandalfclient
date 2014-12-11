@@ -454,3 +454,26 @@ func (s *S) TestGetDiffOnHTTPError(c *C) {
 	c.Assert(err, NotNil)
 	c.Assert(err, ErrorMatches, "^Caught error getting repository metadata: Error performing requested operation\n$")
 }
+
+func (s *S) TestHealthCheck(c *C) {
+	content := "test"
+	h := testHandler{content: content}
+	ts := httptest.NewServer(&h)
+	defer ts.Close()
+	client := Client{Endpoint: ts.URL}
+	result, err := client.GetHealthCheck()
+	c.Assert(err, IsNil)
+	c.Assert(h.url, Equals, "/healthcheck")
+	c.Assert(h.method, Equals, "GET")
+	c.Assert(string(result), Equals, content)
+}
+
+func (s *S) TestHealthCheckOnHTTPError(c *C) {
+	content := `null`
+	h := errorHandler{content: content}
+	ts := httptest.NewServer(&h)
+	defer ts.Close()
+	client := Client{Endpoint: ts.URL}
+	_, err := client.GetHealthCheck()
+	c.Assert(err, NotNil)
+	c.Assert(err, ErrorMatches, "^Caught error getting repository metadata: Error performing requested operation\n$")}

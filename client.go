@@ -202,3 +202,12 @@ func (c *Client) GetDiff(repo, previousCommit, lastCommit string) (string, error
 	}
 	return string(diffOutput), nil
 }
+
+//GetHealthCheck gets healthcheck request output in Gandalf server.
+func (c *Client) GetHealthCheck() ([]byte, error) {
+	result, err := c.get("/healthcheck")
+	if err != nil {
+		return []byte{}, fmt.Errorf("Caught error getting repository metadata: %s", err.Error())
+	}
+	return result, nil
+}
