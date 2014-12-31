@@ -52,7 +52,7 @@ func (c *Client) doRequest(method, path string, body io.Reader) (*http.Response,
 	}
 	response, err := (&http.Client{}).Do(request)
 	if err != nil {
-		return nil, errors.New("Failed to connect to Gandalf server, it's probably down.")
+		return nil, fmt.Errorf("Failed to connect to Gandalf server (%s) - %s", c.Endpoint, err.Error())
 	}
 	return response, nil
 }
