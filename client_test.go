@@ -476,4 +476,5 @@ func (s *S) TestHealthCheckOnHTTPError(c *C) {
 	client := Client{Endpoint: ts.URL}
 	_, err := client.GetHealthCheck()
 	c.Assert(err, NotNil)
-	c.Assert(err, ErrorMatches, "^Error performing requested operation\n$")}
+	c.Assert(err, ErrorMatches, "^Error performing requested operation\n$")
+}
