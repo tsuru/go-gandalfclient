@@ -47,7 +47,7 @@ func (s *S) TestDoRequestConnectionError(c *C) {
 	response, err := client.doRequest("GET", "/", nil)
 	c.Assert(response, IsNil)
 	c.Assert(err, NotNil)
-	c.Assert(err.Error(), Equals, "Failed to connect to Gandalf server, it's probably down.")
+	c.Assert(err.Error(), Equals, "Failed to connect to Gandalf server (http://127.0.0.1:747399) - Get http://127.0.0.1:747399/: dial tcp: invalid port 747399")
 }
 
 func (s *S) TestPost(c *C) {
@@ -77,7 +77,7 @@ func (s *S) TestPostConnectionFailure(c *C) {
 	client := Client{Endpoint: "http://127.0.0.1:747399"}
 	err := client.post(nil, "/")
 	c.Assert(err, NotNil)
-	c.Assert(err.Error(), Equals, "Failed to connect to Gandalf server, it's probably down.")
+	c.Assert(err.Error(), Equals, "Failed to connect to Gandalf server (http://127.0.0.1:747399) - Post http://127.0.0.1:747399/: dial tcp: invalid port 747399")
 }
 
 func (s *S) TestPostMarshalingFailure(c *C) {
@@ -105,7 +105,7 @@ func (s *S) TestDeleteWithConnectionError(c *C) {
 	client := Client{Endpoint: "http://127.0.0.1:747399"}
 	err := client.delete(nil, "/users/something")
 	c.Assert(err, NotNil)
-	c.Assert(err.Error(), Equals, "Failed to connect to Gandalf server, it's probably down.")
+	c.Assert(err.Error(), Equals, "Failed to connect to Gandalf server (http://127.0.0.1:747399) - dial tcp: invalid port 747399")
 }
 
 func (s *S) TestDeleteWithMarshalingError(c *C) {
@@ -476,4 +476,5 @@ func (s *S) TestHealthCheckOnHTTPError(c *C) {
 	client := Client{Endpoint: ts.URL}
 	_, err := client.GetHealthCheck()
 	c.Assert(err, NotNil)
-	c.Assert(err, ErrorMatches, "^Error performing requested operation\n$")}
+	c.Assert(err, ErrorMatches, "^Error performing requested operation\n$")
+}
