@@ -22,7 +22,7 @@ func (s *S) TestDoRequest(c *C) {
 	h := testHandler{content: `some return message`}
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
-	client := Client{Endpoint: ts.URL+"/"}
+	client := Client{Endpoint: ts.URL + "/"}
 	body := bytes.NewBufferString(`{"foo":"bar"}`)
 	response, err := client.doRequest("POST", "/test", body)
 	c.Assert(err, IsNil)
