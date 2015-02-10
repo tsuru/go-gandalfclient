@@ -1,4 +1,4 @@
-// Copyright 2014 go-gandalfclient authors. All rights reserved.
+// Copyright 2015 go-gandalfclient authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -12,6 +12,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 type Client struct {
@@ -43,7 +44,8 @@ func (e *httpError) Error() string {
 }
 
 func (c *Client) doRequest(method, path string, body io.Reader) (*http.Response, error) {
-	request, err := http.NewRequest(method, c.Endpoint+path, body)
+	endpoint := strings.TrimRight(c.Endpoint, "/")
+	request, err := http.NewRequest(method, endpoint+path, body)
 	if err != nil {
 		return nil, errors.New("Invalid Gandalf endpoint.")
 	}
