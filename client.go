@@ -131,7 +131,7 @@ func (c *Client) GetRepository(name string) (repository, error) {
 	url := fmt.Sprintf("/repository/%s?:name=%s", name, name)
 	b, err := c.get(url)
 	if err != nil {
-		return repository{}, fmt.Errorf("Caught error getting repository metadata: %s", err.Error())
+		return repository{}, err
 	}
 	var r repository
 	if err := json.Unmarshal(b, &r); err != nil {

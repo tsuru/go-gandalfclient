@@ -240,7 +240,7 @@ func (s *S) TestGetRepositoryOnHTTPError(c *C) {
 	client := Client{Endpoint: ts.URL}
 	_, err := client.GetRepository("repo-name")
 	c.Assert(err, NotNil)
-	c.Assert(err, ErrorMatches, "^Caught error getting repository metadata: Error performing requested operation\n$")
+	c.Assert(err, ErrorMatches, "^Error performing requested operation\n$")
 }
 
 func (s *S) TestNewUser(c *C) {
