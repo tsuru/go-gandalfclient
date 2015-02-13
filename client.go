@@ -34,13 +34,13 @@ type user struct {
 	Keys map[string]string `json:"keys"`
 }
 
-type httpError struct {
-	code   int
-	reason string
+type HTTPError struct {
+	Code   int
+	Reason string
 }
 
-func (e *httpError) Error() string {
-	return e.reason
+func (e *HTTPError) Error() string {
+	return e.Reason
 }
 
 func (c *Client) doRequest(method, path string, body io.Reader) (*http.Response, error) {
@@ -82,7 +82,7 @@ func (c *Client) post(b interface{}, path string) error {
 	}
 	if response.StatusCode != 200 {
 		b, _ := ioutil.ReadAll(response.Body)
-		return &httpError{code: response.StatusCode, reason: string(b)}
+		return &HTTPError{Code: response.StatusCode, Reason: string(b)}
 	}
 	return nil
 }
@@ -98,7 +98,7 @@ func (c *Client) delete(b interface{}, path string) error {
 	}
 	if response.StatusCode != 200 {
 		b, _ := ioutil.ReadAll(response.Body)
-		return &httpError{code: response.StatusCode, reason: string(b)}
+		return &HTTPError{Code: response.StatusCode, Reason: string(b)}
 	}
 	return err
 }
@@ -106,11 +106,11 @@ func (c *Client) delete(b interface{}, path string) error {
 func (c *Client) get(path string) ([]byte, error) {
 	response, err := c.doRequest("GET", path, nil)
 	if err != nil {
-		return []byte{}, &httpError{code: 500, reason: err.Error()}
+		return []byte{}, &HTTPError{Code: 500, Reason: err.Error()}
 	}
 	b, err := ioutil.ReadAll(response.Body)
 	if response.StatusCode != 200 {
-		return []byte{}, &httpError{code: response.StatusCode, reason: string(b)}
+		return []byte{}, &HTTPError{Code: response.StatusCode, Reason: string(b)}
 	}
 	return b, err
 }
@@ -209,7 +209,7 @@ func (c *Client) GetDiff(repo, previousCommit, lastCommit string) (string, error
 func (c *Client) GetHealthCheck() ([]byte, error) {
 	result, err := c.get("/healthcheck")
 	if err != nil {
-		return []byte{}, &httpError{code: 500, reason: err.Error()}
+		return []byte{}, &HTTPError{Code: 500, Reason: err.Error()}
 	}
 	return result, nil
 }
