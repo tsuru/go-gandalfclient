@@ -47,12 +47,13 @@ func (c *Client) doRequest(method, path string, body io.Reader) (*http.Response,
 	endpoint := strings.TrimRight(c.Endpoint, "/")
 	request, err := http.NewRequest(method, endpoint+path, body)
 	if err != nil {
-		return nil, errors.New("Invalid Gandalf endpoint.")
+		return nil, errors.New("invalid Gandalf endpoint")
 	}
+	request.Close = true
 	if body != nil {
 		request.Header.Set("Content-Type", "application/json")
 	}
-	response, err := (&http.Client{}).Do(request)
+	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to Gandalf server (%s) - %s", c.Endpoint, err.Error())
 	}
@@ -80,6 +81,7 @@ func (c *Client) post(b interface{}, path string) error {
 	if err != nil {
 		return err
 	}
+	defer response.Body.Close()
 	if response.StatusCode != 200 {
 		b, _ := ioutil.ReadAll(response.Body)
 		return &HTTPError{Code: response.StatusCode, Reason: string(b)}
@@ -96,6 +98,7 @@ func (c *Client) delete(b interface{}, path string) error {
 	if err != nil {
 		return err
 	}
+	defer response.Body.Close()
 	if response.StatusCode != 200 {
 		b, _ := ioutil.ReadAll(response.Body)
 		return &HTTPError{Code: response.StatusCode, Reason: string(b)}
@@ -108,6 +111,7 @@ func (c *Client) get(path string) ([]byte, error) {
 	if err != nil {
 		return []byte{}, &HTTPError{Code: 500, Reason: err.Error()}
 	}
+	defer response.Body.Close()
 	b, err := ioutil.ReadAll(response.Body)
 	if response.StatusCode != 200 {
 		return []byte{}, &HTTPError{Code: response.StatusCode, Reason: string(b)}
