@@ -1,4 +1,4 @@
-// Copyright 2013 go-gandalfclient authors. All rights reserved.
+// Copyright 2015 go-gandalfclient authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -6,16 +6,17 @@ package gandalf
 
 import (
 	"io/ioutil"
-	. "launchpad.net/gocheck"
 	"net/http"
 	"testing"
+
+	"gopkg.in/check.v1"
 )
 
-func Test(t *testing.T) { TestingT(t) }
+func Test(t *testing.T) { check.TestingT(t) }
 
 type S struct{}
 
-var _ = Suite(&S{})
+var _ = check.Suite(&S{})
 
 type testHandler struct {
 	body    []byte
