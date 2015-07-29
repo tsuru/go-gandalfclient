@@ -333,6 +333,19 @@ func (s *S) TestAddKeyWithError(c *C) {
 	c.Assert(err, ErrorMatches, expected)
 }
 
+func (s *S) TestUpdateKey(c *C) {
+	h := testHandler{}
+	ts := httptest.NewServer(&h)
+	defer ts.Close()
+	client := Client{Endpoint: ts.URL}
+	err := client.UpdateKey("username", "pubkey", "ssh-rsa somekey me@myhost")
+	c.Assert(err, IsNil)
+	c.Assert(h.url, Equals, "/user/username/key/pubkey")
+	c.Assert(h.method, Equals, "POST")
+	c.Assert(string(h.body), Equals, "ssh-rsa somekey me@myhost")
+	c.Assert(h.header.Get("Content-Type"), Equals, "application/json")
+}
+
 func (s *S) TestRemoveKey(c *C) {
 	h := testHandler{}
 	ts := httptest.NewServer(&h)

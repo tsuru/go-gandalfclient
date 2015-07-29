@@ -61,6 +61,9 @@ func (c *Client) doRequest(method, path string, body io.Reader) (*http.Response,
 }
 
 func (c *Client) formatBody(b interface{}) (*bytes.Buffer, error) {
+	if str, ok := b.(string); ok {
+		return bytes.NewBufferString(str), nil
+	}
 	body := bytes.NewBufferString("null")
 	if b != nil {
 		j, err := json.Marshal(&b)
@@ -179,6 +182,11 @@ func (c *Client) RevokeAccess(rNames, uNames []string) error {
 func (c *Client) AddKey(uName string, key map[string]string) error {
 	url := fmt.Sprintf("/user/%s/key", uName)
 	return c.post(key, url)
+}
+
+func (c *Client) UpdateKey(uName, kName, kBody string) error {
+	url := fmt.Sprintf("/user/%s/key/%s", uName, kName)
+	return c.post(kBody, url)
 }
 
 // RemoveKey removes the key from the user.
