@@ -90,6 +90,34 @@ func (s *S) TestPostMarshalingFailure(c *check.C) {
 	c.Assert(e.Err.Error(), check.Equals, "Unmarshable.")
 }
 
+func (s *S) TestPut(c *check.C) {
+	h := testHandler{content: `some return message`}
+	ts := httptest.NewServer(&h)
+	defer ts.Close()
+	client := Client{Endpoint: ts.URL}
+	err := client.put("ssh-key", "/repository")
+	c.Assert(err, check.IsNil)
+	c.Assert(h.url, check.Equals, "/repository")
+	c.Assert(h.method, check.Equals, "PUT")
+	c.Assert(string(h.body), check.Equals, `ssh-key`)
+}
+
+func (s *S) TestPutWithError(c *check.C) {
+	h := errorHandler{}
+	ts := httptest.NewServer(&h)
+	defer ts.Close()
+	client := Client{Endpoint: ts.URL}
+	err := client.put("ssh-key", "/repository")
+	c.Assert(err, check.ErrorMatches, "^Error performing requested operation\n$")
+}
+
+func (s *S) TestPutConnectionFailure(c *check.C) {
+	client := Client{Endpoint: "http://127.0.0.1:747399"}
+	err := client.put("", "/")
+	c.Assert(err, check.NotNil)
+	c.Assert(err.Error(), check.Equals, "Failed to connect to Gandalf server (http://127.0.0.1:747399) - Put http://127.0.0.1:747399/: dial tcp: invalid port 747399")
+}
+
 func (s *S) TestDelete(c *check.C) {
 	h := testHandler{content: `some return message`}
 	ts := httptest.NewServer(&h)
@@ -342,7 +370,7 @@ func (s *S) TestUpdateKey(c *check.C) {
 	err := client.UpdateKey("username", "pubkey", "ssh-rsa somekey me@myhost")
 	c.Assert(err, check.IsNil)
 	c.Assert(h.url, check.Equals, "/user/username/key/pubkey")
-	c.Assert(h.method, check.Equals, "POST")
+	c.Assert(h.method, check.Equals, "PUT")
 	c.Assert(string(h.body), check.Equals, "ssh-rsa somekey me@myhost")
 	c.Assert(h.header.Get("Content-Type"), check.Equals, "application/json")
 }
