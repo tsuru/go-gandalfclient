@@ -536,7 +536,7 @@ func (s *S) TestGetLog(c *check.C) {
 	            "committer": {
 	                "name": "Joao Jose",
 	                "email": "joaojose@eu.com",
-	                "date": "Tue Dec 1 18:57:08 2015 -0200"
+	                "date": ""
 	            },
 	            "subject": "and when he falleth, he falleth ne'er to ascend again",
 	            "createdAt": "Tue Dec 1 18:57:08 2015 -0200",
@@ -570,7 +570,7 @@ func (s *S) TestGetLog(c *check.C) {
 				Committer: Author{
 					Name:  "Joao Jose",
 					Email: "joaojose@eu.com",
-					Date:  GitTime(date),
+					Date:  GitTime(time.Time{}),
 				},
 				Subject:   "and when he falleth, he falleth ne'er to ascend again",
 				CreatedAt: GitTime(date),

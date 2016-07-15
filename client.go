@@ -57,9 +57,13 @@ type Commit struct {
 type GitTime time.Time
 
 func (c *GitTime) UnmarshalJSON(raw []byte) error {
-	t, err := time.Parse(`"`+GitTimeFormat+`"`, string(raw))
+	strRaw := string(raw)
+	if strRaw == `""` || strRaw == "null" {
+		return nil
+	}
+	t, err := time.Parse(`"`+GitTimeFormat+`"`, strRaw)
 	if err != nil {
-		t, err = time.Parse(`"`+time.RFC3339+`"`, string(raw))
+		t, err = time.Parse(`"`+time.RFC3339+`"`, strRaw)
 		if err != nil {
 			return err
 		}
