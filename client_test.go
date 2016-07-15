@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http/httptest"
+	"time"
 
 	"gopkg.in/check.v1"
 )
@@ -519,4 +520,62 @@ func (s *S) TestHealthCheckOnHTTPError(c *check.C) {
 	_, err := client.GetHealthCheck()
 	c.Assert(err, check.NotNil)
 	c.Assert(err, check.ErrorMatches, "^Error performing requested operation\n$")
+}
+
+func (s *S) TestGetLog(c *check.C) {
+	content := `
+	{
+	    "commits": [
+	        {
+	            "ref": "30f221131c7d6ca50af7d46301a149c16e4f5561",
+	            "author": {
+	                "name": "Joao Jose",
+	                "email": "joaojose@eu.com",
+	                "date": "2015-12-01T18:57:08.000000-02:00"
+	            },
+	            "committer": {
+	                "name": "Joao Jose",
+	                "email": "joaojose@eu.com",
+	                "date": "Tue Dec 1 18:57:08 2015 -0200"
+	            },
+	            "subject": "and when he falleth, he falleth ne'er to ascend again",
+	            "createdAt": "Tue Dec 1 18:57:08 2015 -0200",
+	            "parent": [
+	                "75239a1976f92da9b39c24cdbfae4bfb473cd0e8"
+	            ]
+	        }
+	    ],
+	    "next": "75239a1976f92da9b39c24cdbfae4bfb473cd0e8"
+	}
+	`
+	h := testHandler{content: content}
+	ts := httptest.NewServer(&h)
+	defer ts.Close()
+	client := Client{Endpoint: ts.URL}
+	log, err := client.GetLog("repo-name", "30f221131c7d6ca50af7d46301a149c16e4f5561", "", 1)
+	c.Assert(err, check.IsNil)
+	c.Assert(h.url, check.Equals, "/repository/repo-name/logs?ref=30f221131c7d6ca50af7d46301a149c16e4f5561&total=1")
+	c.Assert(h.method, check.Equals, "GET")
+	date, err := time.Parse(GitTimeFormat, "Tue Dec 1 18:57:08 2015 -0200")
+	c.Assert(err, check.IsNil)
+	c.Assert(log, check.DeepEquals, Log{
+		Commits: []Commit{
+			{
+				Ref: "30f221131c7d6ca50af7d46301a149c16e4f5561",
+				Author: Author{
+					Name:  "Joao Jose",
+					Email: "joaojose@eu.com",
+					Date:  GitTime(date),
+				},
+				Committer: Author{
+					Name:  "Joao Jose",
+					Email: "joaojose@eu.com",
+					Date:  GitTime(date),
+				},
+				Subject:   "and when he falleth, he falleth ne'er to ascend again",
+				CreatedAt: GitTime(date),
+				Parent:    []string{"75239a1976f92da9b39c24cdbfae4bfb473cd0e8"},
+			},
+		}, Next: "75239a1976f92da9b39c24cdbfae4bfb473cd0e8",
+	})
 }
