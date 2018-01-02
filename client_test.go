@@ -49,7 +49,7 @@ func (s *S) TestDoRequestConnectionError(c *check.C) {
 	response, err := client.doRequest("GET", "/", nil)
 	c.Assert(response, check.IsNil)
 	c.Assert(err, check.NotNil)
-	c.Assert(err.Error(), check.Equals, "Failed to connect to Gandalf server (http://127.0.0.1:747399) - Get http://127.0.0.1:747399/: dial tcp: invalid port 747399")
+	c.Assert(err.Error(), check.Equals, "Failed to connect to Gandalf server (http://127.0.0.1:747399) - Get http://127.0.0.1:747399/: dial tcp: address 747399: invalid port")
 }
 
 func (s *S) TestPost(c *check.C) {
@@ -79,7 +79,7 @@ func (s *S) TestPostConnectionFailure(c *check.C) {
 	client := Client{Endpoint: "http://127.0.0.1:747399"}
 	err := client.post(nil, "/")
 	c.Assert(err, check.NotNil)
-	c.Assert(err.Error(), check.Equals, "Failed to connect to Gandalf server (http://127.0.0.1:747399) - Post http://127.0.0.1:747399/: dial tcp: invalid port 747399")
+	c.Assert(err.Error(), check.Equals, "Failed to connect to Gandalf server (http://127.0.0.1:747399) - Post http://127.0.0.1:747399/: dial tcp: address 747399: invalid port")
 }
 
 func (s *S) TestPostMarshalingFailure(c *check.C) {
@@ -116,7 +116,7 @@ func (s *S) TestPutConnectionFailure(c *check.C) {
 	client := Client{Endpoint: "http://127.0.0.1:747399"}
 	err := client.put("", "/")
 	c.Assert(err, check.NotNil)
-	c.Assert(err.Error(), check.Equals, "Failed to connect to Gandalf server (http://127.0.0.1:747399) - Put http://127.0.0.1:747399/: dial tcp: invalid port 747399")
+	c.Assert(err.Error(), check.Equals, "Failed to connect to Gandalf server (http://127.0.0.1:747399) - Put http://127.0.0.1:747399/: dial tcp: address 747399: invalid port")
 }
 
 func (s *S) TestDelete(c *check.C) {
@@ -135,7 +135,7 @@ func (s *S) TestDeleteWithConnectionError(c *check.C) {
 	client := Client{Endpoint: "http://127.0.0.1:747399"}
 	err := client.delete(nil, "/users/something")
 	c.Assert(err, check.NotNil)
-	c.Assert(err.Error(), check.Equals, "Failed to connect to Gandalf server (http://127.0.0.1:747399) - dial tcp: invalid port 747399")
+	c.Assert(err.Error(), check.Equals, "Failed to connect to Gandalf server (http://127.0.0.1:747399) - Delete http://127.0.0.1:747399/users/something: dial tcp: address 747399: invalid port")
 }
 
 func (s *S) TestDeleteWithMarshalingError(c *check.C) {
