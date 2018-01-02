@@ -2,7 +2,11 @@ language: go
 sudo: false
 go:
   - 1.9.2
-  - tip
+  - master
+env:
+  matrix:
+    - JOB=test
+    - JOB=fmt
 addons:
   apt:
     packages:
@@ -10,6 +14,10 @@ addons:
       - git
       - mercurial
 install: make get
-script: 
-  - make test
-  - ./check-fmt.sh
+script:
+  - 'if [ "${JOB}" = "test" ]; then make test; fi'
+  - 'if [ "${JOB}" = "fmt" ]; then ./check-fmt.sh; fi'
+jobs:
+  fast_finish: true
+  allow_failures:
+    - go: master
