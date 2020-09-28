@@ -6,6 +6,7 @@ package gandalf
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,6 +23,7 @@ var GitTimeFormat = "Mon Jan _2 15:04:05 2006 -0700"
 
 type Client struct {
 	Endpoint string
+	Client   *http.Client
 }
 
 // repository represents a git repository.
@@ -29,7 +31,7 @@ type repository struct {
 	Name     string   `json:"name"`
 	Users    []string `json:"users"`
 	IsPublic bool     `json:"ispublic"`
-	SshURL   string   `json:"ssh_url,omitempty"`
+	SSHURL   string   `json:"ssh_url,omitempty"`
 	GitURL   string   `json:"git_url,omitempty"`
 }
 
@@ -86,17 +88,24 @@ func (e *HTTPError) Error() string {
 	return e.Reason
 }
 
-func (c *Client) doRequest(method, path string, body io.Reader) (*http.Response, error) {
+func (c *Client) doRequest(ctx context.Context, method, path string, body io.Reader) (*http.Response, error) {
 	endpoint := strings.TrimRight(c.Endpoint, "/")
 	request, err := http.NewRequest(method, endpoint+path, body)
 	if err != nil {
 		return nil, errors.New("invalid Gandalf endpoint")
 	}
+	request = request.WithContext(ctx)
 	request.Close = true
 	if body != nil {
 		request.Header.Set("Content-Type", "application/json")
 	}
-	response, err := http.DefaultClient.Do(request)
+
+	client := c.Client
+	if client == nil {
+		client = http.DefaultClient
+	}
+
+	response, err := client.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to Gandalf server (%s) - %s", c.Endpoint, err.Error())
 	}
@@ -118,12 +127,12 @@ func (c *Client) formatBody(b interface{}) (*bytes.Buffer, error) {
 	return body, nil
 }
 
-func (c *Client) post(b interface{}, path string) error {
+func (c *Client) post(ctx context.Context, b interface{}, path string) error {
 	body, err := c.formatBody(b)
 	if err != nil {
 		return err
 	}
-	response, err := c.doRequest("POST", path, body)
+	response, err := c.doRequest(ctx, "POST", path, body)
 	if err != nil {
 		return err
 	}
@@ -135,8 +144,8 @@ func (c *Client) post(b interface{}, path string) error {
 	return nil
 }
 
-func (c *Client) put(b, path string) error {
-	response, err := c.doRequest("PUT", path, strings.NewReader(b))
+func (c *Client) put(ctx context.Context, b, path string) error {
+	response, err := c.doRequest(ctx, "PUT", path, strings.NewReader(b))
 	if err != nil {
 		return err
 	}
@@ -148,12 +157,12 @@ func (c *Client) put(b, path string) error {
 	return nil
 }
 
-func (c *Client) delete(b interface{}, path string) error {
+func (c *Client) delete(ctx context.Context, b interface{}, path string) error {
 	body, err := c.formatBody(b)
 	if err != nil {
 		return err
 	}
-	response, err := c.doRequest("DELETE", path, body)
+	response, err := c.doRequest(ctx, "DELETE", path, body)
 	if err != nil {
 		return err
 	}
@@ -165,8 +174,8 @@ func (c *Client) delete(b interface{}, path string) error {
 	return err
 }
 
-func (c *Client) get(path string) ([]byte, error) {
-	response, err := c.doRequest("GET", path, nil)
+func (c *Client) get(ctx context.Context, path string) ([]byte, error) {
+	response, err := c.doRequest(ctx, "GET", path, nil)
 	if err != nil {
 		return []byte{}, &HTTPError{Code: 500, Reason: err.Error()}
 	}
@@ -181,18 +190,18 @@ func (c *Client) get(path string) ([]byte, error) {
 // NewRepository creates a new repository with a given name and,
 // grants access to a list of users
 // and defines whether the repository is public.
-func (c *Client) NewRepository(name string, users []string, isPublic bool) (repository, error) {
+func (c *Client) NewRepository(ctx context.Context, name string, users []string, isPublic bool) (repository, error) {
 	r := repository{Name: name, Users: users, IsPublic: isPublic}
-	if err := c.post(r, "/repository"); err != nil {
+	if err := c.post(ctx, r, "/repository"); err != nil {
 		return repository{}, err
 	}
 	return r, nil
 }
 
 // GetRepository gets metadata from a repository in Gandalf server.
-func (c *Client) GetRepository(name string) (repository, error) {
+func (c *Client) GetRepository(ctx context.Context, name string) (repository, error) {
 	url := fmt.Sprintf("/repository/%s?:name=%s", name, name)
-	b, err := c.get(url)
+	b, err := c.get(ctx, url)
 	if err != nil {
 		return repository{}, err
 	}
@@ -204,57 +213,57 @@ func (c *Client) GetRepository(name string) (repository, error) {
 }
 
 // NewUser creates a new user with her/his given keys.
-func (c *Client) NewUser(name string, keys map[string]string) (user, error) {
+func (c *Client) NewUser(ctx context.Context, name string, keys map[string]string) (user, error) {
 	u := user{Name: name, Keys: keys}
-	if err := c.post(u, "/user"); err != nil {
+	if err := c.post(ctx, u, "/user"); err != nil {
 		return user{}, err
 	}
 	return u, nil
 }
 
 // RemoveUser removes a user.
-func (c *Client) RemoveUser(name string) error {
-	return c.delete(nil, "/user/"+name)
+func (c *Client) RemoveUser(ctx context.Context, name string) error {
+	return c.delete(ctx, nil, "/user/"+name)
 }
 
 // RemoveRepository removes a repository.
-func (c *Client) RemoveRepository(name string) error {
-	return c.delete(nil, "/repository/"+name)
+func (c *Client) RemoveRepository(ctx context.Context, name string) error {
+	return c.delete(ctx, nil, "/repository/"+name)
 }
 
 // GrantAccess grants access to N users into N repositories.
-func (c *Client) GrantAccess(rNames, uNames []string) error {
+func (c *Client) GrantAccess(ctx context.Context, rNames, uNames []string) error {
 	b := map[string][]string{"repositories": rNames, "users": uNames}
-	return c.post(b, "/repository/grant")
+	return c.post(ctx, b, "/repository/grant")
 }
 
 // RevokeAccess revokes access from N users from N repositories.
-func (c *Client) RevokeAccess(rNames, uNames []string) error {
+func (c *Client) RevokeAccess(ctx context.Context, rNames, uNames []string) error {
 	b := map[string][]string{"repositories": rNames, "users": uNames}
-	return c.delete(b, "/repository/revoke")
+	return c.delete(ctx, b, "/repository/revoke")
 }
 
 // AddKey adds keys to the user.
-func (c *Client) AddKey(uName string, key map[string]string) error {
+func (c *Client) AddKey(ctx context.Context, uName string, key map[string]string) error {
 	url := fmt.Sprintf("/user/%s/key", uName)
-	return c.post(key, url)
+	return c.post(ctx, key, url)
 }
 
-func (c *Client) UpdateKey(uName, kName, kBody string) error {
+func (c *Client) UpdateKey(ctx context.Context, uName, kName, kBody string) error {
 	url := fmt.Sprintf("/user/%s/key/%s", uName, kName)
-	return c.put(kBody, url)
+	return c.put(ctx, kBody, url)
 }
 
 // RemoveKey removes the key from the user.
-func (c *Client) RemoveKey(uName, kName string) error {
+func (c *Client) RemoveKey(ctx context.Context, uName, kName string) error {
 	url := fmt.Sprintf("/user/%s/key/%s", uName, kName)
-	return c.delete(nil, url)
+	return c.delete(ctx, nil, url)
 }
 
 // ListKeys retrieves all keys a given user has
-func (c *Client) ListKeys(uName string) (map[string]string, error) {
+func (c *Client) ListKeys(ctx context.Context, uName string) (map[string]string, error) {
 	url := fmt.Sprintf("/user/%s/keys", uName)
-	resp, err := c.get(url)
+	resp, err := c.get(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -264,16 +273,16 @@ func (c *Client) ListKeys(uName string) (map[string]string, error) {
 }
 
 //GetDiff gets diff output between commits from a repository in Gandalf server.
-func (c *Client) GetDiff(repo, previousCommit, lastCommit string) (string, error) {
+func (c *Client) GetDiff(ctx context.Context, repo, previousCommit, lastCommit string) (string, error) {
 	url := fmt.Sprintf("/repository/%s/diff/commits?:name=%s&previous_commit=%s&last_commit=%s", repo, repo, previousCommit, lastCommit)
-	diffOutput, err := c.get(url)
+	diffOutput, err := c.get(ctx, url)
 	if err != nil {
 		return "", fmt.Errorf("Caught error getting repository metadata: %s", err.Error())
 	}
 	return string(diffOutput), nil
 }
 
-func (c *Client) GetLog(repo, ref, path string, total int) (Log, error) {
+func (c *Client) GetLog(ctx context.Context, repo, ref, path string, total int) (Log, error) {
 	v := url.Values{}
 	v.Set("ref", ref)
 	if path != "" {
@@ -284,7 +293,7 @@ func (c *Client) GetLog(repo, ref, path string, total int) (Log, error) {
 	}
 	u := fmt.Sprintf("/repository/%s/logs?%s", repo, v.Encode())
 	var ret Log
-	output, err := c.get(u)
+	output, err := c.get(ctx, u)
 	if err != nil {
 		return ret, fmt.Errorf("Caught error getting repository log: %s", err.Error())
 	}
@@ -293,8 +302,8 @@ func (c *Client) GetLog(repo, ref, path string, total int) (Log, error) {
 }
 
 //GetHealthCheck gets healthcheck request output in Gandalf server.
-func (c *Client) GetHealthCheck() ([]byte, error) {
-	result, err := c.get("/healthcheck")
+func (c *Client) GetHealthCheck(ctx context.Context) ([]byte, error) {
+	result, err := c.get(ctx, "/healthcheck")
 	if err != nil {
 		return []byte{}, &HTTPError{Code: 500, Reason: err.Error()}
 	}

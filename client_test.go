@@ -6,6 +6,7 @@ package gandalf
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http/httptest"
@@ -15,6 +16,8 @@ import (
 )
 
 type unmarshable struct{}
+
+var ctx = context.Background()
 
 func (u unmarshable) MarshalJSON() ([]byte, error) {
 	return nil, errors.New("Unmarshable.")
@@ -26,7 +29,7 @@ func (s *S) TestDoRequest(c *check.C) {
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL + "/"}
 	body := bytes.NewBufferString(`{"foo":"bar"}`)
-	response, err := client.doRequest("POST", "/test", body)
+	response, err := client.doRequest(ctx, "POST", "/test", body)
 	c.Assert(err, check.IsNil)
 	c.Assert(response.StatusCode, check.Equals, 200)
 	c.Assert(string(h.body), check.Equals, `{"foo":"bar"}`)
@@ -38,7 +41,7 @@ func (s *S) TestDoRequestShouldNotSetContentTypeToJsonWhenBodyIsNil(c *check.C) 
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	response, err := client.doRequest("DELETE", "/test", nil)
+	response, err := client.doRequest(ctx, "DELETE", "/test", nil)
 	c.Assert(err, check.IsNil)
 	c.Assert(response.StatusCode, check.Equals, 200)
 	c.Assert(h.header.Get("Content-Type"), check.Not(check.Equals), "application/json")
@@ -46,10 +49,10 @@ func (s *S) TestDoRequestShouldNotSetContentTypeToJsonWhenBodyIsNil(c *check.C) 
 
 func (s *S) TestDoRequestConnectionError(c *check.C) {
 	client := Client{Endpoint: "http://127.0.0.1:747399"}
-	response, err := client.doRequest("GET", "/", nil)
+	response, err := client.doRequest(ctx, "GET", "/", nil)
 	c.Assert(response, check.IsNil)
 	c.Assert(err, check.NotNil)
-	c.Assert(err.Error(), check.Equals, "Failed to connect to Gandalf server (http://127.0.0.1:747399) - Get http://127.0.0.1:747399/: dial tcp: address 747399: invalid port")
+	c.Assert(err.Error(), check.Matches, "Failed to connect to Gandalf server .* - Get .*: dial tcp: address 747399: invalid port")
 }
 
 func (s *S) TestPost(c *check.C) {
@@ -58,7 +61,7 @@ func (s *S) TestPost(c *check.C) {
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	r := repository{Name: "test", Users: []string{"samwan"}}
-	err := client.post(r, "/repository")
+	err := client.post(ctx, r, "/repository")
 	c.Assert(err, check.IsNil)
 	c.Assert(h.url, check.Equals, "/repository")
 	c.Assert(h.method, check.Equals, "POST")
@@ -71,20 +74,20 @@ func (s *S) TestPostWithError(c *check.C) {
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	r := repository{Name: "test", Users: []string{"samwan"}}
-	err := client.post(r, "/repository")
+	err := client.post(ctx, r, "/repository")
 	c.Assert(err, check.ErrorMatches, "^Error performing requested operation\n$")
 }
 
 func (s *S) TestPostConnectionFailure(c *check.C) {
 	client := Client{Endpoint: "http://127.0.0.1:747399"}
-	err := client.post(nil, "/")
+	err := client.post(ctx, nil, "/")
 	c.Assert(err, check.NotNil)
-	c.Assert(err.Error(), check.Equals, "Failed to connect to Gandalf server (http://127.0.0.1:747399) - Post http://127.0.0.1:747399/: dial tcp: address 747399: invalid port")
+	c.Assert(err.Error(), check.Matches, "Failed to connect to Gandalf server .* - Post .* dial tcp: address 747399: invalid port")
 }
 
 func (s *S) TestPostMarshalingFailure(c *check.C) {
 	client := Client{Endpoint: "http://127.0.0.1:747399"}
-	err := client.post(unmarshable{}, "/users/something")
+	err := client.post(ctx, unmarshable{}, "/users/something")
 	c.Assert(err, check.NotNil)
 	e, ok := err.(*json.MarshalerError)
 	c.Assert(ok, check.Equals, true)
@@ -96,7 +99,7 @@ func (s *S) TestPut(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.put("ssh-key", "/repository")
+	err := client.put(ctx, "ssh-key", "/repository")
 	c.Assert(err, check.IsNil)
 	c.Assert(h.url, check.Equals, "/repository")
 	c.Assert(h.method, check.Equals, "PUT")
@@ -108,15 +111,15 @@ func (s *S) TestPutWithError(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.put("ssh-key", "/repository")
+	err := client.put(ctx, "ssh-key", "/repository")
 	c.Assert(err, check.ErrorMatches, "^Error performing requested operation\n$")
 }
 
 func (s *S) TestPutConnectionFailure(c *check.C) {
 	client := Client{Endpoint: "http://127.0.0.1:747399"}
-	err := client.put("", "/")
+	err := client.put(ctx, "", "/")
 	c.Assert(err, check.NotNil)
-	c.Assert(err.Error(), check.Equals, "Failed to connect to Gandalf server (http://127.0.0.1:747399) - Put http://127.0.0.1:747399/: dial tcp: address 747399: invalid port")
+	c.Assert(err.Error(), check.Matches, "Failed to connect to Gandalf server .* - Put .*: dial tcp: address 747399: invalid port")
 }
 
 func (s *S) TestDelete(c *check.C) {
@@ -124,7 +127,7 @@ func (s *S) TestDelete(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.delete(nil, "/user/someuser")
+	err := client.delete(ctx, nil, "/user/someuser")
 	c.Assert(err, check.IsNil)
 	c.Assert(h.url, check.Equals, "/user/someuser")
 	c.Assert(h.method, check.Equals, "DELETE")
@@ -133,14 +136,14 @@ func (s *S) TestDelete(c *check.C) {
 
 func (s *S) TestDeleteWithConnectionError(c *check.C) {
 	client := Client{Endpoint: "http://127.0.0.1:747399"}
-	err := client.delete(nil, "/users/something")
+	err := client.delete(ctx, nil, "/users/something")
 	c.Assert(err, check.NotNil)
-	c.Assert(err.Error(), check.Equals, "Failed to connect to Gandalf server (http://127.0.0.1:747399) - Delete http://127.0.0.1:747399/users/something: dial tcp: address 747399: invalid port")
+	c.Assert(err.Error(), check.Matches, "Failed to connect to Gandalf server .* - Delete .*: dial tcp: address 747399: invalid port")
 }
 
 func (s *S) TestDeleteWithMarshalingError(c *check.C) {
 	client := Client{Endpoint: "http://127.0.0.1:747399"}
-	err := client.delete(unmarshable{}, "/users/something")
+	err := client.delete(ctx, unmarshable{}, "/users/something")
 	c.Assert(err, check.NotNil)
 	e, ok := err.(*json.MarshalerError)
 	c.Assert(ok, check.Equals, true)
@@ -152,7 +155,7 @@ func (s *S) TestDeleteWithResponseError(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.delete(nil, "/user/someuser")
+	err := client.delete(ctx, nil, "/user/someuser")
 	c.Assert(err, check.ErrorMatches, "^Error performing requested operation\n$")
 	c.Assert(string(h.body), check.Equals, "null")
 }
@@ -162,7 +165,7 @@ func (s *S) TestDeleteWithBody(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.delete(map[string]string{"test": "foo"}, "/user/someuser")
+	err := client.delete(ctx, map[string]string{"test": "foo"}, "/user/someuser")
 	c.Assert(err, check.IsNil)
 	c.Assert(h.url, check.Equals, "/user/someuser")
 	c.Assert(h.method, check.Equals, "DELETE")
@@ -174,7 +177,7 @@ func (s *S) TestGet(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	out, err := client.get("/user/someuser")
+	out, err := client.get(ctx, "/user/someuser")
 	c.Assert(err, check.IsNil)
 	c.Assert(string(out), check.Equals, `{"fookey": "bar keycontent"}`)
 	c.Assert(h.url, check.Equals, "/user/someuser")
@@ -186,7 +189,7 @@ func (s *S) TestGetWithError(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	_, err := client.get("/user/someuser")
+	_, err := client.get(ctx, "/user/someuser")
 	c.Assert(err, check.ErrorMatches, "^Error performing requested operation\n$")
 }
 
@@ -217,7 +220,7 @@ func (s *S) TestNewRepository(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	_, err := client.NewRepository("proj1", []string{"someuser"}, false)
+	_, err := client.NewRepository(ctx, "proj1", []string{"someuser"}, false)
 	c.Assert(err, check.IsNil)
 	c.Assert(string(h.body), check.Equals, `{"name":"proj1","users":["someuser"],"ispublic":false}`)
 	c.Assert(h.url, check.Equals, "/repository")
@@ -229,7 +232,7 @@ func (s *S) TestNewRepositoryWithError(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	_, err := client.NewRepository("proj1", []string{"someuser"}, false)
+	_, err := client.NewRepository(ctx, "proj1", []string{"someuser"}, false)
 	expected := "^Error performing requested operation\n$"
 	c.Assert(err, check.ErrorMatches, expected)
 }
@@ -240,13 +243,13 @@ func (s *S) TestGetRepository(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	r, err := client.GetRepository("repo-name")
+	r, err := client.GetRepository(ctx, "repo-name")
 	c.Assert(err, check.IsNil)
 	c.Assert(h.url, check.Equals, "/repository/repo-name?:name=repo-name")
 	c.Assert(h.method, check.Equals, "GET")
 	c.Assert(r.Name, check.Equals, "repo-name")
 	c.Assert(r.GitURL, check.Equals, "git@test.com:repo-name.git")
-	c.Assert(r.SshURL, check.Equals, "git://test.com/repo-name.git")
+	c.Assert(r.SSHURL, check.Equals, "git://test.com/repo-name.git")
 }
 
 func (s *S) TestGetRepositoryOnUnmarshalError(c *check.C) {
@@ -254,12 +257,12 @@ func (s *S) TestGetRepositoryOnUnmarshalError(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	r, err := client.GetRepository("repo-name")
+	r, err := client.GetRepository(ctx, "repo-name")
 	c.Assert(err, check.NotNil)
 	c.Assert(err, check.ErrorMatches, "^Caught error decoding returned json: unexpected end of JSON input$")
 	c.Assert(r.Name, check.Equals, "")
 	c.Assert(r.GitURL, check.Equals, "")
-	c.Assert(r.SshURL, check.Equals, "")
+	c.Assert(r.SSHURL, check.Equals, "")
 }
 
 func (s *S) TestGetRepositoryOnHTTPError(c *check.C) {
@@ -268,7 +271,7 @@ func (s *S) TestGetRepositoryOnHTTPError(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	_, err := client.GetRepository("repo-name")
+	_, err := client.GetRepository(ctx, "repo-name")
 	c.Assert(err, check.NotNil)
 	c.Assert(err, check.ErrorMatches, "^Error performing requested operation\n$")
 }
@@ -278,7 +281,7 @@ func (s *S) TestNewUser(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	_, err := client.NewUser("someuser", map[string]string{"testkey": "ssh-rsa somekey"})
+	_, err := client.NewUser(ctx, "someuser", map[string]string{"testkey": "ssh-rsa somekey"})
 	c.Assert(err, check.IsNil)
 	c.Assert(string(h.body), check.Equals, `{"name":"someuser","keys":{"testkey":"ssh-rsa somekey"}}`)
 	c.Assert(h.url, check.Equals, "/user")
@@ -290,7 +293,7 @@ func (s *S) TestNewUserWithError(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	_, err := client.NewUser("someuser", map[string]string{"testkey": "ssh-rsa somekey"})
+	_, err := client.NewUser(ctx, "someuser", map[string]string{"testkey": "ssh-rsa somekey"})
 	expected := "^Error performing requested operation\n$"
 	c.Assert(err, check.ErrorMatches, expected)
 }
@@ -300,7 +303,7 @@ func (s *S) TestRemoveUser(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.RemoveUser("someuser")
+	err := client.RemoveUser(ctx, "someuser")
 	c.Assert(err, check.IsNil)
 	c.Assert(string(h.body), check.Equals, "null")
 	c.Assert(h.url, check.Equals, "/user/someuser")
@@ -312,7 +315,7 @@ func (s *S) TestRemoveUserWithError(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.RemoveUser("someuser")
+	err := client.RemoveUser(ctx, "someuser")
 	expected := "^Error performing requested operation\n$"
 	c.Assert(err, check.ErrorMatches, expected)
 }
@@ -322,7 +325,7 @@ func (s *S) TestRemoveRepository(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.RemoveRepository("project1")
+	err := client.RemoveRepository(ctx, "project1")
 	c.Assert(err, check.IsNil)
 	c.Assert(h.url, check.Equals, "/repository/project1")
 	c.Assert(h.method, check.Equals, "DELETE")
@@ -334,7 +337,7 @@ func (s *S) TestRemoveRepositoryWithError(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.RemoveRepository("proj2")
+	err := client.RemoveRepository(ctx, "proj2")
 	expected := "^Error performing requested operation\n$"
 	c.Assert(err, check.ErrorMatches, expected)
 }
@@ -345,7 +348,7 @@ func (s *S) TestAddKey(c *check.C) {
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
 	key := map[string]string{"pubkey": "ssh-rsa somekey me@myhost"}
-	err := client.AddKey("username", key)
+	err := client.AddKey(ctx, "username", key)
 	c.Assert(err, check.IsNil)
 	c.Assert(h.url, check.Equals, "/user/username/key")
 	c.Assert(h.method, check.Equals, "POST")
@@ -358,7 +361,7 @@ func (s *S) TestAddKeyWithError(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.AddKey("proj2", map[string]string{"key": "ssh-rsa keycontent user@host"})
+	err := client.AddKey(ctx, "proj2", map[string]string{"key": "ssh-rsa keycontent user@host"})
 	expected := "^Error performing requested operation\n$"
 	c.Assert(err, check.ErrorMatches, expected)
 }
@@ -368,7 +371,7 @@ func (s *S) TestUpdateKey(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.UpdateKey("username", "pubkey", "ssh-rsa somekey me@myhost")
+	err := client.UpdateKey(ctx, "username", "pubkey", "ssh-rsa somekey me@myhost")
 	c.Assert(err, check.IsNil)
 	c.Assert(h.url, check.Equals, "/user/username/key/pubkey")
 	c.Assert(h.method, check.Equals, "PUT")
@@ -381,7 +384,7 @@ func (s *S) TestRemoveKey(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.RemoveKey("username", "keyname")
+	err := client.RemoveKey(ctx, "username", "keyname")
 	c.Assert(err, check.IsNil)
 	c.Assert(h.url, check.Equals, "/user/username/key/keyname")
 	c.Assert(h.method, check.Equals, "DELETE")
@@ -393,7 +396,7 @@ func (s *S) TestRemoveKeyWithError(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.RemoveKey("proj2", "keyname")
+	err := client.RemoveKey(ctx, "proj2", "keyname")
 	expected := "^Error performing requested operation\n$"
 	c.Assert(err, check.ErrorMatches, expected)
 }
@@ -403,7 +406,7 @@ func (s *S) TestListKeys(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	keys, err := client.ListKeys("userx")
+	keys, err := client.ListKeys(ctx, "userx")
 	c.Assert(err, check.IsNil)
 	expected := map[string]string{"fookey": "bar keycontent"}
 	c.Assert(expected, check.DeepEquals, keys)
@@ -416,7 +419,7 @@ func (s *S) TestListKeysWithError(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	_, err := client.ListKeys("userx")
+	_, err := client.ListKeys(ctx, "userx")
 	c.Assert(err.Error(), check.Equals, "Error performing requested operation\n")
 }
 
@@ -427,7 +430,7 @@ func (s *S) TestGrantAccess(c *check.C) {
 	client := Client{Endpoint: ts.URL}
 	repositories := []string{"projectx", "projecty"}
 	users := []string{"userx"}
-	err := client.GrantAccess(repositories, users)
+	err := client.GrantAccess(ctx, repositories, users)
 	c.Assert(err, check.IsNil)
 	c.Assert(h.url, check.Equals, "/repository/grant")
 	c.Assert(h.method, check.Equals, "POST")
@@ -442,7 +445,7 @@ func (s *S) TestGrantAccessWithError(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.GrantAccess([]string{"projectx", "projecty"}, []string{"userx"})
+	err := client.GrantAccess(ctx, []string{"projectx", "projecty"}, []string{"userx"})
 	expected := "^Error performing requested operation\n$"
 	c.Assert(err, check.ErrorMatches, expected)
 }
@@ -454,7 +457,7 @@ func (s *S) TestRevokeAccess(c *check.C) {
 	client := Client{Endpoint: ts.URL}
 	repositories := []string{"projectx", "projecty"}
 	users := []string{"userx"}
-	err := client.RevokeAccess(repositories, users)
+	err := client.RevokeAccess(ctx, repositories, users)
 	c.Assert(err, check.IsNil)
 	c.Assert(h.url, check.Equals, "/repository/revoke")
 	c.Assert(h.method, check.Equals, "DELETE")
@@ -469,7 +472,7 @@ func (s *S) TestRevokeAccessWithError(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	err := client.RevokeAccess([]string{"projectx", "projecty"}, []string{"usery"})
+	err := client.RevokeAccess(ctx, []string{"projectx", "projecty"}, []string{"usery"})
 	expected := "^Error performing requested operation\n$"
 	c.Assert(err, check.ErrorMatches, expected)
 }
@@ -480,7 +483,7 @@ func (s *S) TestGetDiff(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	diffOutput, err := client.GetDiff("repo-name", "1b970b076bbb30d708e262b402d4e31910e1dc10", "545b1904af34458704e2aa06ff1aaffad5289f8f")
+	diffOutput, err := client.GetDiff(ctx, "repo-name", "1b970b076bbb30d708e262b402d4e31910e1dc10", "545b1904af34458704e2aa06ff1aaffad5289f8f")
 	c.Assert(err, check.IsNil)
 	c.Assert(h.url, check.Equals, "/repository/repo-name/diff/commits?:name=repo-name&previous_commit=1b970b076bbb30d708e262b402d4e31910e1dc10&last_commit=545b1904af34458704e2aa06ff1aaffad5289f8f")
 	c.Assert(h.method, check.Equals, "GET")
@@ -493,7 +496,7 @@ func (s *S) TestGetDiffOnHTTPError(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	_, err := client.GetDiff("repo-name", "1b970b076bbb30d708e262b402d4e31910e1dc10", "545b1904af34458704e2aa06ff1aaffad5289f8f")
+	_, err := client.GetDiff(ctx, "repo-name", "1b970b076bbb30d708e262b402d4e31910e1dc10", "545b1904af34458704e2aa06ff1aaffad5289f8f")
 	c.Assert(err, check.NotNil)
 	c.Assert(err, check.ErrorMatches, "^Caught error getting repository metadata: Error performing requested operation\n$")
 }
@@ -504,7 +507,7 @@ func (s *S) TestHealthCheck(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	result, err := client.GetHealthCheck()
+	result, err := client.GetHealthCheck(ctx)
 	c.Assert(err, check.IsNil)
 	c.Assert(h.url, check.Equals, "/healthcheck")
 	c.Assert(h.method, check.Equals, "GET")
@@ -517,7 +520,7 @@ func (s *S) TestHealthCheckOnHTTPError(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	_, err := client.GetHealthCheck()
+	_, err := client.GetHealthCheck(ctx)
 	c.Assert(err, check.NotNil)
 	c.Assert(err, check.ErrorMatches, "^Error performing requested operation\n$")
 }
@@ -552,7 +555,7 @@ func (s *S) TestGetLog(c *check.C) {
 	ts := httptest.NewServer(&h)
 	defer ts.Close()
 	client := Client{Endpoint: ts.URL}
-	log, err := client.GetLog("repo-name", "30f221131c7d6ca50af7d46301a149c16e4f5561", "", 1)
+	log, err := client.GetLog(ctx, "repo-name", "30f221131c7d6ca50af7d46301a149c16e4f5561", "", 1)
 	c.Assert(err, check.IsNil)
 	c.Assert(h.url, check.Equals, "/repository/repo-name/logs?ref=30f221131c7d6ca50af7d46301a149c16e4f5561&total=1")
 	c.Assert(h.method, check.Equals, "GET")
